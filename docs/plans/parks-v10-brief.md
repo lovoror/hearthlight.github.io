@@ -46,12 +46,17 @@ français (voir « À la fin »).
    - `docs/parks/zion.md`, ta bible pour Zion ;
    - `docs/parks/SOURCES.md` et `docs/parks/refs/ZION.json` ;
    - `docs/ONLINE.md` et `server/relay.mjs`, le modèle du futur serveur du monde.
-2. **Isole-toi.** L'utilisateur et d'autres agents (dont Codex) travaillent dans
-   `~/Github/hearthlight-public`, avec des fichiers non commités : n'y travaille pas.
-   - Fais ton propre clone (ou worktree) de `Hearthlight/hearthlight.github.io`, sur une
-     **branche `parks-v10`**.
-   - Utilise l'identité noreply du repo : `git config user.name pookee` et
-     `git config user.email 13053375+pookee@users.noreply.github.com`.
+2. **Ta branche et ta copie.** Le repo est `~/Github/hearthlight-public`, le repo public
+   `Hearthlight/hearthlight.github.io`. Son identité noreply est déjà configurée : vérifie avec
+   `git config user.email`, qui doit répondre `13053375+pookee@users.noreply.github.com`.
+   - Tout ton travail va sur la **branche `parks-v10`**, créée depuis `origin/main` à jour.
+   - Si ta session tourne déjà dans un worktree à elle (l'app Claude en crée un), crée la branche
+     là.
+   - Sinon, fais-toi un worktree, pour que la copie principale reste sur `main` pour les autres
+     sessions :
+     `git -C ~/Github/hearthlight-public worktree add ~/Github/hearthlight-parks -b parks-v10 origin/main`.
+   - D'autres sessions (Claude ou Codex) peuvent reprendre sur `main` pendant que tu travailles.
+     Ne touche jamais à leurs fichiers, et fais toujours `git add` de tes seuls chemins.
    - Lance ton serveur de test sur un port libre (ni 8765 ni 8766), et ouvre toujours le jeu muet
      (`&mute=1`) : l'utilisateur travaille à côté.
 3. **Récupère Zion.**
