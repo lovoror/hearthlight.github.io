@@ -143,6 +143,13 @@ Hearthlight's style, with friends, for the pleasure of it.**
      them.
 5. **Procedural everything, as always.** No image or audio files. Maps are compact data plus
    code, and photos are the player's own renders.
+6. **One engine for every mode.** Everything this mode adds to the engine is shared, the way the
+   solo game already runs Party Mode's systems. That covers:
+   - the messaging, the camera cut-away, the vehicles, the wildlife and the photo mode;
+   - the discoveries, the weather and seasons, the shared clock, the network presence.
+
+   All of it works, and is tested, in the story (solo and Party), in remote play and in National
+   Park. Only the parks' own content lives apart (§9.1).
 
 ## 3. Three ways to play
 
@@ -215,8 +222,9 @@ The engine already has most of it:
 - `src/pad/pad.js`: the sheet, and the messages `{t:'say', text}` and `{t:'quick', id}`.
 - `src/party/inputs.js` and `net.js`: routing.
 - `Player.say`.
-- A new `src/parks/chat.js`: the phrase list, the local filter, the log, emoji → emotes. It is
-  shared by Party, solo and the open world.
+- A new shared module, `src/ui/chat.js`: the phrase list, the local filter, the log, emoji →
+  emotes. It goes in the engine, not in `src/parks/`, because the messaging belongs to every mode
+  (§9.1): the story in solo and Party, remote play, and National Park's three ways to play.
 - i18n: the phrases are `t()` keys, in all four dictionaries.
 
 ## 5. The open world's server (robust by design)
@@ -770,6 +778,33 @@ Once the experience is right, add the things that make it fun beyond walking:
 They are all built on the shared systems of §7.7.
 
 ## 9. What we reuse
+
+### 9.1 One engine: where the code goes
+The rule: **one common base for every mode.**
+- **Shared code** lives in the engine's usual folders (`src/engine`, `src/render`, `src/ui`,
+  `src/pad`, `src/party`, `src/systems`, `src/world`, `server/`). It is everything that isn't a
+  park's own content:
+  - **messaging**: bubbles, quick phrases, emotes, the filter, the log. It serves Party, solo,
+    remote play and the open world.
+  - **the camera cut-away and the overlook camera**, which help the story's canyons and forests
+    too.
+  - **map descriptors** instead of `BIG`, the big outdoor instances, and relief upgrades. The
+    existing world must render the same unless a change is meant: check with before and after
+    screenshots.
+  - **vehicles** (the van, a shuttle on a route with stops, bikes, boats), **wildlife behaviour**
+    (herds, keeping their distance, day and night routines), **the photo mode**, **a
+    « Discoveries » page in the journal**, weather and seasons, the shared clock.
+  - **the network presence layer**. `server/world.mjs` and its client are keyed by map and
+    instance, not by park, so any mode could later host a shared world.
+- **National Park only** lives in `src/parks/`, which is left out of the playable builds until
+  release (§0): the parks' data (`src/parks/data/`), the US world map, the mode's menus and glue,
+  and the parks' own set pieces.
+- **How the shared additions ship.**
+  - Each one comes as its own commits, mode-agnostic, usable without any park content, and tested
+    in every mode.
+  - They can reach `main` on their own, before the parks, as soon as the user approves. The
+    messaging for Party Mode is the obvious first.
+  - The progress log lists them as « ready for main ».
 
 | Need | Existing system |
 |---|---|

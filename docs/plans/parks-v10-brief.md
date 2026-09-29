@@ -95,6 +95,25 @@ français (voir « À la fin »).
   - jamais de variable `t` ;
   - solo, Party et monde ouvert partagent leurs systèmes et doivent tous marcher : teste les trois,
     avec 1, 4 et 8 bots.
+- **Une base commune à tous les modes** (plan §9.1). Tout ce que tu ajoutes au moteur est
+  partagé : son code vit dans les dossiers habituels du moteur, jamais dans `src/parks/`. Il doit
+  marcher, et être testé, dans l'histoire en solo et en Party, en jeu à distance et dans National
+  Park. Cela couvre :
+  - la messagerie ;
+  - la découpe caméra et la caméra de belvédère ;
+  - les descripteurs de carte, les instances et le relief ;
+  - les véhicules (van, navette, vélo) ;
+  - le comportement des animaux, le mode photo, la page « Découvertes » du journal ;
+  - la météo et les saisons, l'horloge commune ;
+  - la présence réseau : le serveur est indexé par carte et par instance, pas par parc.
+
+  Seul le contenu propre aux parcs va dans `src/parks/` : les données des parcs, la carte des USA,
+  les menus du mode, les pièces propres à un parc.
+
+  Le monde existant doit rester identique, sauf changement voulu : vérifie avec des captures avant
+  et après. Les ajouts communs arrivent en commits séparés, utilisables sans les parcs. Liste-les
+  dans le journal comme « prêts pour main » : c'est l'utilisateur qui décidera quand ils passent
+  sur `main` (sans doute la messagerie pour le Party Mode en premier).
 - **La vérité et le respect** :
   - les noms et les faits sont réels, tirés de la fiche ;
   - pas d'emblème NPS, et les noms du jeu sont « Park Passport » et « Young Ranger » ;
@@ -121,8 +140,9 @@ Tout le plan §4 :
   - sourdine, blocage et signalement (dans un journal local pour l'instant) ;
   - un réglage familial « phrases rapides seulement ».
 
-La messagerie doit aussi marcher dans le Party Mode actuel et en solo, pas seulement dans
-National Park.
+La messagerie est une brique commune (plan §9.1). Son code vit dans le moteur (`src/ui/chat.js`,
+`src/pad/`, `src/party/`), pas dans `src/parks/`. Elle marche partout : l'histoire en solo, le
+Party Mode, le jeu à distance et National Park. Teste-la dans chacun.
 
 ### 2. Le moteur des parcs
 
@@ -281,14 +301,16 @@ Comment l'appliquer :
 - **M6** : le polissage, jusqu'à 9/10 partout.
 
 Après **chaque** jalon :
-- les tests : en solo, en Party avec 1, 4 et 8 bots, et le monde partagé avec des bots ;
+- les tests : en solo, en Party avec 1, 4 et 8 bots, et le monde partagé avec des bots ; les
+  ajouts communs sont testés aussi dans l'histoire, en solo et en Party ;
 - 0 erreur, 0 missing ;
 - les captures et les notes ;
 - l'audit de sécurité ;
 - un commit, avec un message terminé par la ligne
   `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`, et un push **sur la branche
   `parks-v10`** ;
-- le journal et `CLAUDE.md` à jour : l'arborescence, les commandes, les pièges.
+- le journal et `CLAUDE.md` à jour : l'arborescence, les commandes, les pièges, et la liste des
+  ajouts communs « prêts pour main ».
 
 Le jeu existant doit rester intact et jouable à chaque commit.
 

@@ -270,7 +270,10 @@ at x ≥ 2000, dungeons at x ≥ 3000.
   where everyone online sees each other (a cute MMO, the default: `server/world.mjs` to come);
   speech bubbles & quick phrases from the phone, the keyboard or a gamepad. Zion first. Plan
   `docs/plans/parks-v10.md` (its rubric §10.1), the atlas `docs/parks/README.md` (a dossier per
-  park, `parks.json`, `SOURCES.md`, `refs/`). **Unreleased**: nothing of it in any playable version
+  park, `parks.json`, `SOURCES.md`, `refs/`). One engine for every mode (the plan's §9.1): what
+  the mode adds to the engine (messaging, camera cut-away, vehicles, wildlife, photo mode,
+  discoveries, the network presence…) lives in the engine's folders and works in the story, Party,
+  remote play and the parks alike; only the parks' own content goes in `src/parks/`. **Unreleased**: nothing of it in any playable version
   (Pages, desktop, the VPS copy, demos) until the user says so — a local-only dev flag, `src/parks/`
   left out of the Pages & desktop copies, no world server deployed (the plan's §0). And, always:
   check that everything pushed to this public repo is safe (no secrets, private infra details,
