@@ -221,10 +221,15 @@ tools/        devserver.py, partybots.js, sagatest.js (the saga played by itself
               poll `window.__pf`), grandmatest.js (Grandmother Kraken played through),
               i18n-scan.mjs, i18n-glossary.md,
               mapdump.mjs, bigmap.mjs (`--crop
-              x0,z0,x1,z1` for a close-up), reel.js + trailer.js + reelcut.py (the trailer)
+              x0,z0,x1,z1` for a close-up), reel.js + trailer.js + reelcut.py (the trailer),
+              parks/ (Hearthlight Parks: fetch.py builds each national park's data pack into the
+              git-ignored parks/cache/ — NPS boundary, points of interest, trails & roads, OSM
+              named features, the official map links; atlas.py rebuilds docs/parks/parks.json)
 docs/         README screenshots, plans (docs/plans/), social/ (the link previews' 1200×630 pictures —
               og.png for the site, og-invite.png for pad.html / play.html — shot in the game at
-              1200×630 with the logo drawn in its font; the Pages workflow puts them at the root)
+              1200×630 with the logo drawn in its font; the Pages workflow puts them at the root),
+              parks/ (the national parks atlas: a dossier per park read from its official visitor
+              map, parks.json, SOURCES.md — see the Parks v10 plan)
 ```
 
 Coordinates: 1 unit = 1 tile = 16 texels; x east, z south; the camera looks north at 45°.
@@ -245,6 +250,17 @@ with `node tools/bigmap.mjs screenshots/bigmap.png`. New tile types live in `wor
 at x ≥ 2000, dungeons at x ≥ 3000.
 
 ## Plans & progress logs (read the latest first after a context reset)
+
+- Parks v10 « Hearthlight Parks » (P0 done: the atlas; nothing built yet) — walk the 63 US
+  national parks in the game's style, each map faithful to the park's official visitor map;
+  solo, Party, or a shared open world where everyone online sees each other (a cute MMO, the
+  default: `server/world.mjs` to come); speech bubbles & quick phrases from the phone, the
+  keyboard or a gamepad: `docs/plans/parks-v10.md`, the atlas `docs/parks/README.md` (a dossier
+  per park, `parks.json`, `SOURCES.md`). **Unreleased**: nothing of it in any playable version
+  (Pages, desktop, the VPS copy, demos) until the user says so — a local-only dev flag, `src/parks/`
+  left out of the Pages & desktop copies, no world server deployed (the plan's §0). And, always:
+  check that everything pushed to this public repo is safe (no secrets, private infra details,
+  personal data or local paths, copied text or images).
 
 - Release v9 (in progress) — finish the game & prepare its release (pause menu, HUD modes, the
   hero in the creator, the big-screen menu, eight classes, World v7's leftovers, ES/DE/IT, the
