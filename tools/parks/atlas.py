@@ -100,7 +100,7 @@ def main():
     m['has_dossier'] = os.path.exists(os.path.join(DOCS, code.lower() + '.md'))
     parks.append(m)
   with open(os.path.join(DOCS, 'parks.json'), 'w', encoding='utf-8') as f:
-    json.dump({'about': 'The 63 US national parks for Hearthlight Parks — see docs/parks/README.md',
+    json.dump({'about': 'The 63 US national parks for the National Park mode — see docs/parks/README.md',
                'parks': parks}, f, ensure_ascii=False, indent=1)
   by = {p['code']: p for p in parks}
 

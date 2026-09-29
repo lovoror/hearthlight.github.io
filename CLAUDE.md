@@ -233,9 +233,10 @@ tools/        devserver.py, partybots.js, sagatest.js (the saga played by itself
               i18n-scan.mjs, i18n-glossary.md,
               mapdump.mjs, bigmap.mjs (`--crop
               x0,z0,x1,z1` for a close-up), reel.js + trailer.js + reelcut.py (the trailer),
-              parks/ (Hearthlight Parks: fetch.py builds each national park's data pack into the
-              git-ignored parks/cache/ — NPS boundary, points of interest, trails & roads, OSM
-              named features, the official map links; atlas.py rebuilds docs/parks/parks.json)
+              parks/ (the National Park mode: fetch.py builds each national park's data pack into
+              the git-ignored parks/cache/ — NPS boundary, points of interest, trails & roads, the
+              NPS map catalogue, OSM named features, and the reference photos of docs/parks/refs/;
+              atlas.py rebuilds docs/parks/parks.json and checks the dossiers)
 docs/         README screenshots, plans (docs/plans/), social/ (the link previews' 1200×630 pictures —
               og.png for the site, og-invite.png for pad.html / play.html — shot in the game at
               1200×630 with the logo drawn in its font; the Pages workflow puts them at the root),
@@ -262,12 +263,14 @@ at x ≥ 2000, dungeons at x ≥ 3000.
 
 ## Plans & progress logs (read the latest first after a context reset)
 
-- Parks v10 « Hearthlight Parks » (P0 done: the atlas; nothing built yet) — walk the 63 US
-  national parks in the game's style, each map faithful to the park's official visitor map;
-  solo, Party, or a shared open world where everyone online sees each other (a cute MMO, the
-  default: `server/world.mjs` to come); speech bubbles & quick phrases from the phone, the
-  keyboard or a gamepad: `docs/plans/parks-v10.md`, the atlas `docs/parks/README.md` (a dossier
-  per park, `parks.json`, `SOURCES.md`). **Unreleased**: nothing of it in any playable version
+- Parks v10 « National Park » (P0 done: the atlas; next, the first playable version, local
+  only: `docs/plans/parks-v10-brief.md`) — walk the 63 US national parks in the game's style,
+  chill, no story, with friends; each park recognisable, faithful to its official visitor map and
+  modelled from reference photos; a Mario-like US world map; solo, Party, or a shared open world
+  where everyone online sees each other (a cute MMO, the default: `server/world.mjs` to come);
+  speech bubbles & quick phrases from the phone, the keyboard or a gamepad. Zion first. Plan
+  `docs/plans/parks-v10.md` (its rubric §10.1), the atlas `docs/parks/README.md` (a dossier per
+  park, `parks.json`, `SOURCES.md`, `refs/`). **Unreleased**: nothing of it in any playable version
   (Pages, desktop, the VPS copy, demos) until the user says so — a local-only dev flag, `src/parks/`
   left out of the Pages & desktop copies, no world server deployed (the plan's §0). And, always:
   check that everything pushed to this public repo is safe (no secrets, private infra details,

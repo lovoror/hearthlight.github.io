@@ -78,6 +78,23 @@ Notes:
 - **Order of trust**: when sources disagree, trust the park's current brochure and website first,
   then the NPS datasets, then USGS, then OSM and Wikipedia. The dossiers say which one they used.
 
+## 3b. Reference photos (for modelling only)
+
+The parks must be recognisable (plan §7.8), so their landmarks are modelled from real photos.
+- **The lists**: `docs/parks/refs/<CODE>.json`, one per park being built. Each entry holds the
+  view, where the camera stands and which way it looks, what must match, the image URL, the source
+  page, the credit and the licence. The repository holds **links only**.
+- **The images**: `python3 tools/parks/fetch.py refs --only ZION` downloads them into
+  `tools/parks/cache/ZION/refs/` (git-ignored) with an `index.md`. Open them with an image viewer
+  while modelling, and compare them with screenshots taken from the same spot.
+- **Sources, in order of preference**:
+  1. NPS photos credited « NPS Photo » or « NPS/<name> », which are public domain: the parks'
+     photo galleries, NPGallery, the parks' official Flickr accounts.
+  2. Freely licensed photos: Wikimedia Commons, with the licence and author noted.
+  3. Never stock sites or blogs, and never photos whose subject is a person.
+- **Never** commit these images, put them in the game or show them to players: the game stays
+  procedural.
+
 ## 4. Other useful references
 
 - Harpers Ferry Center, NPS map symbols and patterns (the look of the brochures):

@@ -1,9 +1,10 @@
 # The parks atlas
 
 The 63 US national parks, read from the maps the parks hand their visitors. They are the base
-for **Hearthlight Parks**, the mode where you walk the national parks in the game's style, solo,
-with friends or in a shared open world. The design is in
-[`docs/plans/parks-v10.md`](../plans/parks-v10.md).
+for **National Park**, the mode where you walk the national parks in the game's style. It is
+chill, with no story: solo, with friends, or in a shared open world. The design is in
+[`docs/plans/parks-v10.md`](../plans/parks-v10.md), and the first park to build is
+[Zion](zion.md), with its reference views in [`refs/ZION.json`](refs/ZION.json).
 
 ## What's here
 

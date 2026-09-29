@@ -1,4 +1,4 @@
-# Parks v10 « Hearthlight Parks » — walking the US national parks (preliminary design)
+# Parks v10 « National Park » — walking the US national parks
 
 The brief (2026-09-29), in the user's words:
 
@@ -12,6 +12,27 @@ The brief (2026-09-29), in the user's words:
 > avec un système robuste si possible. On en profitera pour rajouter la possibilité d'envoyer du
 > texte qui apparaît comme une bulle du personnage qui parle, depuis le téléphone ou l'interface
 > (ordi).
+
+The decisions, later that day:
+
+> Pour le nom du mode, ça peut être juste « National Park ». J'imagine bien une carte du monde un
+> peu comme dans Mario, qui montre les USA, avec les parcs en grands points d'intérêt dans lesquels
+> on pourrait spawn (ils ne sont pas collés les uns aux autres) ; à l'entrée/sortie de chaque parc,
+> ou depuis l'intérieur d'un parc, on pourrait en choisir un autre. OK pour démarrer par Zion.
+>
+> L'idée de ce mode serait plus chill que l'autre : pas d'histoire, juste se balader avec ses amis,
+> découvrir des choses — on se concentre sur l'expérience. Un van pour se déplacer sur les routes,
+> les animaux emblématiques du parc, des activités réelles : un peu un walking simulator. Bien sûr,
+> cacher des easter eggs pour avoir des « découvertes » ; on essaiera d'ajouter des choses à faire
+> au-delà pour que ce soit fun.
+>
+> Les parcs devront être vraiment réalistes : quelqu'un qui a vu les parcs doit pouvoir reconnaître
+> les routes, les chemins, les endroits phares. De vraies photos des lieux importants pourraient
+> aider.
+>
+> Prépare un prompt pour un autre agent : une première version jouable — tout le moteur du monde
+> partagé + un premier parc, pas en ligne pour l'instant, avec le système de notes qui fait
+> reprendre jusqu'à un état satisfaisant pour un premier parc « complet », et la messagerie.
 
 **Status: P0 — the preliminary documentation, done (2026-09-29).** Nothing is built yet. P0 is
 made of:
@@ -27,6 +48,10 @@ made of:
 
 Ten researcher agents wrote the dossiers in parallel, one per region. What they found in common is
 §7.7.
+
+**Next: the first playable version**, local only and unpublished: the messaging, the park engine,
+**Zion** complete, the shared-world engine on `localhost`, and the US world map. The building
+agent's brief is [`parks-v10-brief.md`](parks-v10-brief.md); its bar is the rubric of §10.1.
 
 Phase 2 builds from here: turning each park into a game map, in the order of §10.
 
@@ -44,11 +69,14 @@ Phase 2 builds from here: turning each park into a game map, in the order of §1
      site off the public trails, a nest, a protected tree. The dossiers write « not given ».
    - no data under a licence that forbids it (`docs/parks/SOURCES.md`).
 
-   Before each commit, run the personal-trace patterns of the publish script, plus a grep for
-   local paths (`/Users/`, `/private/tmp`, scratch folders), e-mail addresses, IP addresses and
-   the words key, token and secret, over the files being added. Stage only the files you meant
-   to add.
-2. **The Parks mode is not released.** Nothing of it is reachable in any playable version (the
+   Before each commit, search the files being added for personal traces:
+   - the user's real name or e-mail address;
+   - home and local paths (`/Users/`, `/private/tmp`, scratch folders);
+   - the VPS's IP address, and any e-mail or IP address;
+   - the words key, token and secret.
+
+   Stage only the files you meant to add.
+2. **The National Park mode is not released.** Nothing of it is reachable in any playable version (the
    Pages site, the desktop app, the VPS test copy, a demo) until the user decides otherwise.
    - While it is being built, it sits behind a local-only development flag: `?parks=1`, honoured
      only with `?debug=1` on `localhost`.
@@ -61,17 +89,33 @@ Phase 2 builds from here: turning each park into a game map, in the order of §1
 
 ---
 
-## 1. The idea
+## 1. The idea (decided)
 
-A third mode next to the story and the Party Mode: **stroll through the 63 US national parks,
-rebuilt in Hearthlight's style.**
-- **Faithful to each park's visitor map.** Roads, trails, districts, landmarks, water and relief
-  all sit where the brochure puts them, but stylised: tiles and terraces, toon light, the chibis.
+**« National Park »** is the mode's name, kept as it is in every language. It is a third mode next
+to the story and the Party Mode: **stroll through the 63 US national parks, rebuilt in
+Hearthlight's style, with friends, for the pleasure of it.**
+- **Chill: no story, no combat, no levels.** It is a walking simulator you share: walk, drive,
+  look, discover. The experience is the game.
+- **Real parks you recognise.** Someone who has been there should recognise the roads, the trails
+  and the famous places without a label.
+  - Each map follows the park's official visitor map.
+  - Its landmarks are modelled from real reference photos (§7.8).
+  - The art stays ours: tiles and terraces, toon light, the chibis.
 - **Compressed where the park is empty.** Hotspots stay near true scale; the wilderness between
   them is squeezed.
-- **Walking is the whole game**: hiking, looking, photographing, spotting animals, collecting
-  passport stamps, learning from rangers, camping under the stars, and being there when the park
-  does its thing (Old Faithful, the firefall, the synchronous fireflies, the bats at dusk).
+- **Getting around like a visitor.** On foot, by bike, or in **your van** on the park roads. Where
+  the park runs a shuttle, you ride it: Zion's canyon is shuttle-only most of the year, so you
+  park the van and take the bus.
+- **The park's own animals**, alive and wary: keep your distance.
+- **Real activities**: hiking, wading, a permit lottery, a ranger talk, a sunrise, camping under
+  the stars.
+- **Being there when the park does its thing**: Old Faithful, the firefall, the synchronous
+  fireflies, the bats at dusk.
+- **Discoveries and easter eggs** are hidden everywhere (§8.8), so there is always something to
+  find. More things to do come later (§8.9).
+- **The US world map** (§6.3): a Mario-like overworld of the United States with the parks as big
+  points of interest. You spawn in one, and leave it (by a park entrance, or from the park's
+  menu) to choose another.
 - **Shared by default.** Everyone online in the same park sees each other: a small, gentle MMO.
   Speech bubbles, quick phrases, waves, group photos and campfire circles.
 - **Party and solo stay first-class**: the couch with phones as controllers, or one player,
@@ -87,9 +131,9 @@ rebuilt in Hearthlight's style.**
 1. **The real park, in our style.** You could hold the NPS brochure next to the screen and find
    your way. Names, roads, trails, rivers and landmarks go where the map puts them, and so do the
    sightlines (Half Dome from Glacier Point). The art is ours: stylised, compressed, cozy.
-2. **Walk, look, share. No combat.** The verbs are walk, hike, climb, paddle, ride, photograph,
-   spot, sketch, stamp, learn, camp and chat. There is no gloom in the real parks, and nobody
-   dies. A slip sends you back to the trail.
+2. **Walk, look, share. No story, no combat.** The verbs are walk, hike, climb, paddle, ride, drive,
+   photograph, spot, sketch, stamp, learn, camp and chat. There is no gloom in the real parks, and
+   nobody dies. A slip sends you back to the trail.
 3. **Together by default.** The open world is the default. Party and solo are one tap away, and
    the same save carries between them.
 4. **True and respectful.**
@@ -359,14 +403,27 @@ The proposal is **Zion**:
 
 **Acadia** comes second: coast, tides, a sunrise summit, carriage roads and a lighthouse.
 
-### 6.3 The road trip (the meta map)
-- **The map.** A US map drawn in code from simplified state outlines (US Census cartographic
-  boundaries, public domain, kept as compact polylines) with the parks as pins.
-- **The camper van.** The home between parks: its stickers are your passport's cover, and the
-  drive is a short scene.
-- **Distant parks**: Alaska by ferry or bush plane; Hawaiʻi, American Samoa and the Virgin
-  Islands by plane or seaplane.
-- **Trips group the parks** and give themed collections:
+### 6.3 The US world map (a Mario-like overworld)
+- **The map** is the United States drawn in code like a *Super Mario World* overworld.
+  - State outlines come from the US Census cartographic boundaries (public domain), simplified
+    to compact polylines in `src/parks/data/usa.js`.
+  - Soft relief and colours per region: deserts, forests, mountains, coasts.
+  - The parks are **big points of interest**, each with a little landmark of its own (Half Dome,
+    Old Faithful, the Arch…) rather than a dot.
+- **The parks are apart.** Each one is its own map, and the overworld is how you go from one to
+  another.
+  - Your **van** drives along the overworld's stylised roads between the pins; the drive is a
+    short, cosy transition.
+  - Alaska, Hawaiʻi, American Samoa and the Virgin Islands are insets, reached by plane or ferry.
+  - The van is also your home between parks: its stickers are your passport's cover.
+- **Spawn in a park**: at its main entrance or visitor centre, or next to your friends.
+- **Leave a park** by driving out through an entrance station (the gate opens onto the
+  overworld), or from anywhere inside with the park menu's « Change park ».
+- **In the open world**, each pin shows how many people are in that park and where your friends
+  are. A household travels together.
+- **In the first version**, Zion is open and the other 62 pins are on the map as « coming soon ».
+- **Trips group the parks** (the legs of the road trip) and give themed collections; a leg's pins
+  light up as you visit them:
   - the Grand Circle (Utah, Arizona, Colorado, New Mexico);
   - the Pacific Crest (Washington, Oregon, California);
   - the Rocky Road (Montana, Wyoming, Colorado);
@@ -585,6 +642,26 @@ raised them again and again. Build each one once, as a shared system:
         and the Gifford House pies;
       - the Zion and Bryce shuttles as fast travel with narrated stops.
 
+### 7.8 Realism: recognisable, from reference photos
+- **The bar.** Someone who has been to the park recognises, without labels, its roads, its trails
+  and its famous places:
+  - the silhouette of each landmark;
+  - what stands left and right of the road;
+  - the colours at that hour.
+- **Reference views.** Each park gets a list, `docs/parks/refs/<CODE>.json`. Every entry gives the
+  view, where the camera stands and which way it looks, what must match, the image URL, the
+  source page, the credit and the licence. Zion's list is the first.
+  `python3 tools/parks/fetch.py refs --only ZION` downloads the images into the git-ignored cache
+  (`tools/parks/cache/ZION/refs/`), to look at while modelling.
+- **Rules for the photos.** They are references only: never in the repo, never in the game, never
+  shown to players; the game stays procedural. Prefer NPS public-domain photos, then freely
+  licensed ones (Wikimedia Commons, with the licence noted), and no people as subjects.
+- **The recognition test** (part of the scoring, §10.1). For each reference view, take a
+  screenshot from the same spot and direction. Compare them side by side (silhouettes, layout,
+  colours) and fix until a visitor would say « that's the Watchman from the bridge ».
+- **The scale, again.** The warp of §7.1 keeps the recognisable places near true proportions.
+  Compression goes to the in-between, never to what a visitor photographs.
+
 ## 8. What players do
 
 ### 8.1 The loop
@@ -663,6 +740,35 @@ With no combat, the buttons change job. All of them are named with `ctl()` on th
 
 The phone's pad relabels its buttons to match: act, jump, camera, talk.
 
+### 8.8 Discoveries and easter eggs
+Every park hides things to find, logged in the journal's « Discoveries » page with a count per park
+(« 23 / 40 »):
+- **Nature off the beaten path**: a hidden alcove, a hanging garden, an arch seen from one spot
+  only, a seep with a snail that lives nowhere else.
+- **Wildlife rarities**: a condor with its wing-tag number, a desert tortoise after the rain, a
+  ringtail by the campground at night, a tarantula crossing in October.
+- **The park's history**: the CCC's stonework, the tunnel's windows, an old ranch, the first
+  ranger's cabin, each with a ranger's true story.
+- **Moments**: being there when it happens, like the Watchman glowing at sunset, the monsoon's
+  instant waterfalls or snow on red rock.
+- **Hearthlight nods**, the true easter eggs: a wink at the game's world, such as a lost lantern,
+  Pim's trade cart at a gateway town's market, or a rubber hen. They stay tasteful and rare, and
+  never bend the park's truth.
+- **Sky and time**: the stars of a Dark Sky Park, a meteor shower, a moonbow.
+
+Discoveries give stamps, stickers for the van and outfits, never power.
+
+### 8.9 More to do, after the first version
+Once the experience is right, add the things that make it fun beyond walking:
+- photo challenges;
+- co-op hunts (a park « bingo »);
+- bike or kayak races;
+- a Young Ranger booklet per park;
+- community goals;
+- seasonal events.
+
+They are all built on the shared systems of §7.7.
+
 ## 9. What we reuse
 
 | Need | Existing system |
@@ -684,7 +790,11 @@ The phone's pad relabels its buttons to match: act, jump, camera, talk.
 
 ## 10. Milestones
 
-- **P0 — the atlas & this plan** (done: this commit).
+- **P0 — the atlas & this plan** (done, 2026-09-29).
+- **The first playable version (P1–P4 for Zion, plus the world map), local only and
+  unpublished.** This is the building agent's brief, [`parks-v10-brief.md`](parks-v10-brief.md).
+  It covers the messaging, the park engine, Zion complete, the shared-world engine on `localhost`
+  and the US world map, and it runs until the rubric of §10.1 is at 9 or more everywhere.
 - **P1 — bubbles & quick chat** in today's Party and solo (phone, keyboard, gamepad, remote) and
   in 5 languages. It is useful right away and it is the MMO's first brick.
 - **P2 — the park engine and pipeline**:
@@ -696,16 +806,35 @@ The phone's pad relabels its buttons to match: act, jump, camera, talk.
 - **P4 — the open world**: `server/world.mjs`, moderation, bots, the load and chaos tests, and
   a kill switch. It is tested locally (and on a private test instance if the user wants one); it
   is not deployed publicly before the release is decided (§0).
-- **P5 — the first set of parks (tier 1)** and the road-trip map.
-- **P6 — release** « Parks 1.0 », **only when the user decides it** (§0): the flag comes off, the
+- **P5 — the first wave of parks (tier 1)**, from reference photos like Zion.
+- **P6 — release** « National Park 1.0 », **only when the user decides it** (§0): the flag comes off, the
   Pages and desktop copies take `src/parks/`, and the world server is deployed. Then tier 2 and
   tier 3, a region at a time.
 
+### 10.1 The bar for a « complete » park: the scoring rubric
+After each milestone, every area is scored /10 with evidence. Work goes on until every area is at
+9 or more, the game's usual bar:
+
+| Area | What 9/10 means | How it is judged |
+|---|---|---|
+| **Recognisable** | a visitor recognises every reference view without labels | the recognition test (§7.8): a screenshot per reference view, side by side |
+| **Faithful map** | roads, trails, stops and landmarks in the brochure's order and places; distances feel like the park's | the game map laid over the brochure; walking and driving times against §7.1's targets |
+| **Beautiful** | the park's colours, light and textures; walls, river, trees; day, night and weather | screenshots at the real camera and zoom, in split screen too |
+| **Feel** | walking, climbing, wading, the van, the shuttle and a bike all feel good; nowhere to get stuck | bots walk every trail and drive every road; hands-on play |
+| **Alive** | the emblematic animals live their lives and keep their distance; visitors, rangers, the shuttle | watching at dawn, noon, dusk and night |
+| **Discoveries & activities** | 1–2 hours of things to find and do: discoveries, stamps, photo spots, the field guide, ranger talks, the park's real rules as loops | a count, and a full playthrough |
+| **World map** | a readable, charming Mario-like overworld; smooth ins and outs | screenshots; transitions timed |
+| **Shared world** | robust with 60 players in an instance: resume, offline fallback, no desync, bounded bandwidth | the numbers of the unit, load and chaos tests |
+| **Messaging** | bubbles from phone, keyboard and gamepad; quick phrases in 5 languages; safe | tests on each device |
+| **Performance** | smooth in solo, with 8 split views, and with 40 avatars in view | frame-time measures (`tools/perf.js`) |
+| **Quality gates** | 0 console errors, 0 i18n missing, checks and tests pass | the tools |
+
 ## 11. Open questions (for the user)
 
-1. **The name.** « Hearthlight Parks » / « Les Grands Parcs » / « Trailhead »…
-2. **The pilot and the first wave**: Zion, then Acadia, then the ten of §6.2 (proposed), or
-   another choice?
+- ~~The name~~ → **« National Park »** (decided 2026-09-29).
+- ~~The pilot~~ → **Zion** (decided). The rest of the first wave stays as proposed in §6.2.
+- ~~Story or not~~ → **no story**: chill, a walking simulator with friends (decided).
+
 3. **Free text in the open world**: on by default? An age question? « Quick phrases only » as the
    family default?
 4. **The clock in the open world**:

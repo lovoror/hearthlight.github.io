@@ -1,20 +1,23 @@
 #!/usr/bin/env python3
-"""The US national parks' data pack, for Hearthlight Parks (docs/plans/parks-v10.md).
+"""The US national parks' data pack, for the National Park mode (docs/plans/parks-v10.md).
 
   python3 tools/parks/fetch.py [steps...] [--only YELL,ZION] [--order CODE,CODE...] [--mirror 0|1|2]
 
-Steps (default: all, in this order): bounds nps wiki maps hfc pois lines osm pack.
-Writes into tools/parks/cache/ (git-ignored): bounds.geojson, nps.json, wiki.json and, per park,
-<code>/maps.json (the maps page's links), hfc.json (the NPS map catalogue's maps of the park), pois.json (NPS points of interest), lines.geojson
-(the NPS's trails & roads), osm.json
-(named natural features inside the boundary) and pack.md, a digest to read before a park's
-dossier (docs/parks/<code>.md) or its game map. Standard library only; the NPS API key comes
-from $NPS_API_KEY (DEMO_KEY otherwise: 10 calls an hour, one is enough here).
-Sources & licences: docs/parks/SOURCES.md. Be gentle with Overpass: one query at a time.
+Steps (default: all, in this order): bounds nps wiki maps hfc pois lines osm pack; `refs` on demand.
+Writes into tools/parks/cache/ (git-ignored): bounds.geojson, nps.json, wiki.json and, per park:
+<code>/maps.json (the maps page's links), hfc.json (the park's maps in the NPS map catalogue),
+pois.json (NPS points of interest), lines.geojson (the NPS's trails & roads), osm.json (named
+natural features inside the boundary) and pack.md, a digest to read before a park's dossier
+(docs/parks/<code>.md) or its game map. `refs` downloads the reference photos listed in
+docs/parks/refs/<CODE>.json into <code>/refs/ (with an index.md): references for modelling only,
+never committed, never shipped. Standard library only; the NPS API key comes from $NPS_API_KEY
+(DEMO_KEY otherwise: 10 calls an hour, one is enough here). Sources & licences:
+docs/parks/SOURCES.md. Be gentle with Overpass: one query at a time.
 """
 import json, math, os, re, sys, time, html, urllib.parse, urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.dirname(os.path.dirname(HERE))
 OUT = os.path.join(HERE, 'cache')
 UA = 'Hearthlight-parks-research/1.0 (+https://github.com/Hearthlight/hearthlight.github.io)'
 
@@ -393,7 +396,30 @@ def step_pack(codes):
     print('pack', code)
 
 
-STEPS = ['bounds', 'nps', 'wiki', 'maps', 'hfc', 'pois', 'lines', 'osm', 'pack']
+def step_refs(codes):  # the reference photos of docs/parks/refs/<CODE>.json, for modelling — local only
+  for code in codes:
+    lst = os.path.join(ROOT, 'docs', 'parks', 'refs', code + '.json')
+    if not os.path.exists(lst): continue
+    with open(lst, encoding='utf-8') as f: refs = json.load(f)
+    os.makedirs(path(code, 'refs'), exist_ok=True)
+    rows, n = ['# %s — reference views (never commit or ship these images)' % code, ''], 0
+    for i, r in enumerate(refs, 1):
+      ext = os.path.splitext(urllib.parse.urlparse(r['image']).path)[1].lower()
+      name = '%02d-%s%s' % (i, r['id'], ext if ext in ('.jpg', '.jpeg', '.png', '.webp') else '.jpg')
+      out = path(code, 'refs', name)
+      if not os.path.exists(out):
+        try:
+          req = urllib.request.Request(r['image'], headers={'User-Agent': UA})
+          with urllib.request.urlopen(req, timeout=120) as resp, open(out, 'wb') as f: f.write(resp.read())
+          n += 1; time.sleep(1)
+        except Exception as e: print('  refs', code, r['id'], e); continue
+      rows.append('- `%s` — **%s** (%s, %s, facing %s): %s' % (name, r['view'], r['where'],
+                                                            '%.4f,%.4f' % (r['lat'], r['lon']), r['facing'], r['match']))
+    with open(path(code, 'refs', 'index.md'), 'w', encoding='utf-8') as f: f.write('\n'.join(rows) + '\n')
+    print('refs', code, len(refs), 'listed,', n, 'downloaded')
+
+
+STEPS = ['bounds', 'nps', 'wiki', 'maps', 'hfc', 'pois', 'lines', 'osm', 'pack']  # (refs: on demand)
 
 if __name__ == '__main__':
   args = sys.argv[1:]
