@@ -21,8 +21,14 @@ still procedural.
 - **Settings · Party server** — one address, and both the relay and the page your phones open come
   out of it; the machine's own LAN address is offered as the default, so a party on your Wi-Fi
   needs nothing typed at all (the dev server *is* the relay: `python tools/devserver.py 8765`).
-- **Settings · Performance stats** — fps, the frame's ms and its peak, triangles, draw calls,
-  meshes, textures and shaders, in the corner of the screen (`?debug=1` forces it on for a run).
+- **Settings · Performance stats** — fps, the frame's ms and its peak, where that frame actually
+  went (`upd` / `3D` / `UI` ms), the real draw calls, triangles, meshes, textures and shaders, in
+  the corner of the screen (`?debug=1` forces it on for a run). It also prints one line to the
+  console every two seconds — a phone has no console to open, and `adb logcat` shows it.
+- **Settings · Graphics** (Auto / High / Low) — the shadow map's size and how many frames it is
+  reused for; the shadow pass is a second walk over the whole scene into a picture bigger than the
+  one it lands on, so it is the first thing to move when frames are short. Auto keeps 1024 texels
+  refreshed every other frame on a touch device, Low drops the map.
 - **Fixes that came out of the two above** — the title screen stops overlapping itself on a short
   phone canvas, the settings list scrolls instead of squeezing its rows together, banners and
   pause cards make room for the taller Chinese line, and the Android app takes the WebView's

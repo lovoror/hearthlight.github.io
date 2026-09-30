@@ -38,6 +38,16 @@ const MUTE = typeof location !== 'undefined' && /[?&]mute=1\b/.test(location.sea
 // spending. ?debug=1 / ?stats=1 still forces it on for a test run.)
 const SHOW_STATS = typeof location !== 'undefined' && /[?&](debug|stats)=1\b/.test(location.search);
 
+// Settings · Graphics. The shadow map is the one knob that costs a whole extra walk over the
+// scene, so it is what the presets move; `auto` reads the device (a hand-held keeps a 1024 map
+// and reuses it for two frames, a desktop keeps exactly what it always had).
+const TOUCHY = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
+const QUALITY = {
+  high: { shadows: true, shadowSize: 2048, every: 1 },
+  low: { shadows: false, shadowSize: 512, every: 1 },
+};
+const AUTO_QUALITY = TOUCHY ? { shadows: true, shadowSize: 1024, every: 2 } : QUALITY.high;
+
 export class Game {
   constructor() {
     this.display = new Display(document.getElementById('world'), document.getElementById('ui'));
@@ -56,7 +66,11 @@ export class Game {
     this.phone = new SoloPhone(this);       // a phone as the solo game's controller (Settings)
     this.controls = new ControlsPanel(this); // keyboard · gamepad · phone, side by side (the title, Settings)
     this.debug = this.makeDebug();
-    this.stats = { on: SHOW_STATS || !!this.settings.stats, fps: 0, ms: 0, peak: 0, acc: 0, n: 0 };
+    this.stats = {
+      on: SHOW_STATS || !!this.settings.stats, fps: 0, ms: 0, peak: 0, acc: 0, n: 0,
+      upd: 0, d3: 0, ui: 0, sumUpd: 0, sumD3: 0, sumUi: 0,
+      calls: 0, tris: 0, sumCalls: 0, sumTris: 0, log: 0,
+    };
     this.input.onFirstGesture = () => { audio.unlock(); this.applySettings(); };
     this.input.onGesture = () => audio.unlock();
   }
@@ -129,6 +143,11 @@ export class Game {
     const s = this.stats;
     if (!s.on || !(dt > 0)) return;
     s.acc += dt; s.n++;
+    // (the last frame's display list, averaged over the window: a shadow map is redrawn only
+    //  every `shadowEvery` frames, so a single frame's count flips back and forth on its own)
+    const info = this.r3d.renderer.info;
+    s.sumCalls = (s.sumCalls || 0) + info.render.calls;
+    s.sumTris = (s.sumTris || 0) + info.render.triangles;
     // (the peak is published when the window closes, so it never reads as a frame that took 0 ms)
     s.peakNow = Math.max(s.peakNow || 0, dt * 1000);
     if (s.acc >= 0.25) {
@@ -136,11 +155,27 @@ export class Game {
       s.fps = s.fps ? s.fps * 0.6 + fps * 0.4 : fps;
       s.ms = s.ms ? s.ms * 0.6 + ms * 0.4 : ms;
       s.peak = s.peakNow; s.peakNow = 0;
+      // what the frame spent where: the game's own update, the 3D submission, the UI paint
+      const avg = (cur, sum) => (cur ? cur * 0.6 + (sum / s.n) * 0.4 : sum / s.n);
+      s.upd = avg(s.upd, s.sumUpd); s.d3 = avg(s.d3, s.sumD3); s.ui = avg(s.ui, s.sumUi);
+      s.calls = s.sumCalls / s.n; s.tris = s.sumTris / s.n;
+      s.sumUpd = s.sumD3 = s.sumUi = 0; s.sumCalls = 0; s.sumTris = 0;
       s.acc = 0; s.n = 0;
+      // (every two seconds, one line for `adb logcat`: a phone has no console to open, so this
+      //  is how the phone's own numbers are read — see CLAUDE.md, Settings · Performance stats)
+      if ((s.log = (s.log || 0) + 1) >= 8) {
+        s.log = 0;
+        // (the preset and the screen the run is on go in too: a log read after the fact has no
+        //  other way to tell a changed setting from a changed scene)
+        const m = this.world && this.world.menu;
+        const sh = this.r3d.shadowsOn ? `${this.r3d.sun.shadow.mapSize.x}/${this.r3d.shadowEvery}` : 'off';
+        console.log(`[stats] ${s.fps.toFixed(0)} fps ${s.ms.toFixed(1)} ms (peak ${Math.round(s.peak)}) · upd ${s.upd.toFixed(2)} · 3D ${s.d3.toFixed(2)} · ui ${s.ui.toFixed(2)} ms · ${Math.round(s.calls)} calls · ${this.mode} gfx ${this.settings.quality || 'auto'} shadow ${sh}${m ? ` menu ${m.open ? 'open#' + m.sel : 'closed'}` : ''}`);
+      }
     }
   }
 
   frame(dt) {
+    const t0 = performance.now();
     this.t += dt;
     if (this.mode !== 'game') this.input.touchUi = true;
     this.input.update(dt);
@@ -149,7 +184,7 @@ export class Game {
     // (a phone or a gamepad closes it with its own Close / B)
     if (this.saves.isOpen) {
       if (this.input.pressed('cancel') || this.input.pressed('menu')) this.saves.close();
-      this.input.keys.clear(); this.input.consume(); this.saves.update(); this.draw(); return;
+      this.input.keys.clear(); this.input.consume(); this.saves.update(); this.draw(); this.measureFrame(t0); return;
     }
     if (this.phone.panelOpen) this.phone.updatePanel(dt, this.input);
     else if (this.controls.open) this.controls.update(dt, this.input);
@@ -159,9 +194,24 @@ export class Game {
     else if (this.mode === 'party') this.party.update(dt);
     this.input.mouse.moved = false;
     this.draw();
+    this.measureFrame(t0);
+  }
+
+  // Where the frame's milliseconds went: the game's own update, the 3D draws, the UI paint.
+  // (draw() times itself and R3D adds up its own passes; the overlay averages these over the
+  //  same quarter-second window as the fps, so the three add up to the frame.)
+  measureFrame(t0) {
+    const s = this.stats;
+    if (!s.on) return;
+    const draw = this.drawMs || 0, d3 = Math.min(draw, this.r3d.cpu || 0);
+    s.sumUpd += Math.max(0, performance.now() - t0 - draw);
+    s.sumD3 += d3;
+    s.sumUi += Math.max(0, draw - d3);
   }
 
   draw() {
+    const d0 = performance.now();
+    this.r3d.beginFrame();
     if (this.projectLinks) {
       const hidden = this.mode !== 'title' || this.world.menu.open || this.controls.open || this.phone.panelOpen || this.confirmNew || !!this.continuePick || this.saves.isOpen;
       if (this.projectLinks.hidden !== hidden) this.projectLinks.hidden = hidden;
@@ -177,6 +227,7 @@ export class Game {
     this.drawPadNote(this.display.ctx);
     if (this.stats.on) this.drawStats(this.display.ctx);
     if (this.mode === 'party') this.party.remotePlay.capture();
+    this.drawMs = performance.now() - d0;
   }
 
   openControls() { if (this.world.menu.open && this.mode === 'title') this.world.menu.close(); this.controls.show(); }
@@ -214,6 +265,7 @@ export class Game {
     audio.setVolume('ambient', st.ambient);
     this.input.rumbleOn = st.rumble !== false;
     this.stats.on = !!st.stats || SHOW_STATS;
+    this.r3d.setQuality(QUALITY[st.quality] || AUTO_QUALITY);
     setServer(st.server);
   }
 
@@ -922,8 +974,9 @@ export class Game {
     const k = (v) => (v >= 1e6 ? (v / 1e6).toFixed(1) + 'M' : v >= 1e3 ? (v / 1e3).toFixed(1) + 'k' : String(Math.round(v)));
     const rows = [
       `${Math.round(s.fps)} fps · ${s.ms.toFixed(1)} ms (peak ${Math.round(s.peak)})`,
-      `${k(info.render.triangles)} tris · ${k(info.render.calls)} call${info.render.calls === 1 ? '' : 's'}`,
-      `${k(info.memory.geometries)} geo · ${k(info.memory.textures)} tex · ${k((info.programs || []).length)} prog`,
+      `upd ${s.upd.toFixed(1)} · 3D ${s.d3.toFixed(1)} · UI ${s.ui.toFixed(1)} ms`,
+      `${k(s.tris)} tris · ${k(s.calls)} call${Math.round(s.calls) === 1 ? '' : 's'} · ${k(info.memory.geometries)} geo`,
+      `${k(info.memory.textures)} tex · ${k((info.programs || []).length)} prog · shadow ${this.r3d.shadowsOn ? this.r3d.sun.shadow.mapSize.x + (this.r3d.shadowEvery > 1 ? '/' + this.r3d.shadowEvery : '') : 'off'}`,
     ];
     const lh = lineStep(11);
     const w = Math.max(...rows.map((r) => measure(r))) + 9, h = rows.length * lh + 5;

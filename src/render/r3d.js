@@ -36,6 +36,13 @@ export class R3D {
     renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFShadowMap;
+    // (a shadow map is a second walk over the whole scene, into a square many times the size
+    //  of the picture itself, and Three redraws it on every render() by default. Here the game
+    //  asks for it from `beginFrame` instead — every `shadowEvery` frames — see setQuality)
+    renderer.shadowMap.autoUpdate = false;
+    // (and its own counters are reset by every render() too, of which a frame makes several:
+    //  with `beginFrame` the overlay reads the whole frame, not just the last pass)
+    renderer.info.autoReset = false;
     renderer.setClearColor(0x14121c, 1);
 
     this.scene = new THREE.Scene();
@@ -57,6 +64,12 @@ export class R3D {
     sh.normalBias = 0.02;
     this.scene.add(this.sun, this.sun.target);
     this.sunDir = new THREE.Vector3(0.45, 1, 0.55).normalize();
+
+    // Settings · Graphics (setQuality) and the stats overlay (beginFrame/cpu)
+    this.shadowsOn = true;
+    this.shadowEvery = 1;
+    this.shadowFrame = 0;
+    this.cpu = 0;              // milliseconds this frame spent issuing 3D draws
 
     // toon ramp shared by all materials (sampled on .r)
     const ramp = new Uint8Array([
@@ -141,6 +154,43 @@ export class R3D {
     this.postScene = new THREE.Scene();
     this.postCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
     this.postScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.post));
+  }
+
+  // Settings · Graphics: what a frame is allowed to spend on shadows.
+  // `shadowSize` is the map's edge in texels — it covers the view plus a five-tile margin. The
+  // picture it lands on is a few hundred pixels across (634 wide on a phone), so 1024 is still
+  // finer than the frame it feeds: measured against 2048 it moves shadow edges by under a screen
+  // pixel, which shows up in a pixel diff (3.9% of pixels, at the outline pass) and not to the
+  // eye; a 2048 map fills four times as much for that. `every` is how many frames a map is used
+  // for: the frustum snaps to whole map texels as the view moves, so a map one frame old is at
+  // worst one texel out — under a pixel on screen.
+  setQuality({ shadows = true, shadowSize = 1024, every = 2 } = {}) {
+    const sh = this.sun.shadow;
+    const want = Math.max(256, Math.min(4096, shadowSize | 0));
+    if (sh.mapSize.x !== want) {
+      sh.mapSize.set(want, want);
+      if (sh.map) { sh.map.dispose(); sh.map = null; }   // Three allocates the new size itself
+    }
+    this.shadowEvery = Math.max(1, every | 0);
+    if (this.shadowsOn !== !!shadows) {
+      this.shadowsOn = !!shadows;
+      this.sun.castShadow = this.shadowsOn;
+      // (what a shader is compiled with changes with this, and Three only recompiles a
+      //  material when it is told the material changed — this is a one-off, on the settings row)
+      this.scene.traverse((o) => {
+        const m = o.material;
+        if (m) for (const x of (Array.isArray(m) ? m : [m])) x.needsUpdate = true;
+      });
+    }
+    this.renderer.shadowMap.needsUpdate = true;
+  }
+
+  // Start a frame: the counters Three would reset per pass, and the shadow cadence.
+  beginFrame() {
+    this.renderer.info.reset();
+    this.cpu = 0;
+    this.shadowFrame = (this.shadowFrame + 1) % this.shadowEvery;
+    this.renderer.shadowMap.needsUpdate = this.shadowsOn && (this.shadowEvery === 1 || this.shadowFrame !== 0);
   }
 
   resize(w, h) {
@@ -235,7 +285,13 @@ export class R3D {
   //  split: two full-screen views composited along a line through the
   //         centre with normal `split.n` (pixels), seam opacity `split.a`
   // `prep(view)` runs before each view (lights, shadows).
-  renderViews(views, { split = null, cells = [1, 1], prep = null } = {}) {
+  // (timed: `cpu` is what the stats overlay shows as the 3D slice of the frame)
+  renderViews(views, opts = {}) {
+    const t0 = performance.now();
+    try { this.drawFrame(views, opts); } finally { this.cpu += performance.now() - t0; }
+  }
+
+  drawFrame(views, { split = null, cells = [1, 1], prep = null } = {}) {
     const r = this.renderer;
     const u = this.post.uniforms;
     // (the world's matrices once for all the views — only the lights move between them)
@@ -299,11 +355,13 @@ export class R3D {
   }
 
   render() {
+    const t0 = performance.now();
     const r = this.renderer;
     r.setRenderTarget(this.rt);
     r.render(this.scene, this.camera);
     r.setRenderTarget(null);
     r.render(this.postScene, this.postCam);
+    this.cpu += performance.now() - t0;
   }
 }
 

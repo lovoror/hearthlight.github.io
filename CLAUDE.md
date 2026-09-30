@@ -68,8 +68,31 @@ python3 tools/devserver.py 8765        # static files + /__shot + /__lan + /ws p
   (`detectLan()` / `defaultServer()` in `src/party/net.js`, called at boot from `src/game.js`), so
   the host that runs the party shows `192.168.1.20:8765` without anyone typing it; the address is
   shown as-is, never through `t()`.
-- Settings · **Performance stats** draws fps, the frame's ms (and its peak), triangles, draw calls,
-  meshes, textures and shaders in the top-left; `?debug=1` / `?stats=1` forces it on for a test run.
+- Settings · **Performance stats** draws fps, the frame's ms (and its peak), what the frame spent
+  where (`upd` / `3D` / `UI` ms — the game's own update, the timed 3D submission in
+  `R3D.render`/`renderViews`, and the rest of the paint), the frame's real draw calls, triangles,
+  meshes, textures and shaders, and the shadow setting in force. `?debug=1` / `?stats=1` forces it
+  on for a test run. While it is on, every two seconds it also prints one `[stats] …` line to the
+  console (`adb logcat` shows it as `chromium: … [stats]`): a phone has no console to open, so that
+  line is how the phone's own `upd` / `3D` / `UI` ms and calls are read. It ends with the screen it
+  is on and the preset in force (`… · 233 calls · creator gfx auto shadow 1024/2 menu closed`): a
+  log read after the fact has no other way to tell a changed setting from a changed scene.
+  Three resets `renderer.info` on **every** `render()` and a frame makes several
+  (shadow, each view, the post pass), so `R3D` sets `info.autoReset = false` and the game calls
+  `r3d.beginFrame()` once a frame — without that the numbers only describe the last pass.
+- Settings · **Graphics** (Auto / High / Low, `src/game.js` `QUALITY` + `AUTO_QUALITY`) moves the
+  shadow map: its edge in texels and how many frames a map is reused for. `R3D.setQuality()` also
+  flips `sun.castShadow` and recompiles the scene's materials when it does (Three only recompiles
+  what it is told changed). `renderer.shadowMap.autoUpdate = false` and `beginFrame()` asks for a
+  refresh every `shadowEvery` frames: the frustum snaps to whole map texels as the view moves
+  (`setView`), so a map one frame old is at worst one texel out. Auto is 1024 texels every second
+  frame on a touch device, high is 2048 every frame, low drops the map. The shadow pass is a second
+  walk over the scene into a target far bigger than the picture it lands on (4.2 M texels against
+  a phone's 634×288 canvas at 2048, so 1024 is still finer than the frame it feeds): measured on
+  the same view, 1024/every-2 moves shadow edges by under a screen pixel — 3.9% of pixels differ
+  from 2048 at the outline pass, nothing the eye reads as a change. It is the knob to reach for
+  when a phone is short of frames, and the draw-call count it saves is the honest measure of it:
+  the counter now reads the whole frame (352 calls with the shadow pass, 95 without).
 - Driving a headless Chrome: `node tools/cdp.mjs eval|poll|navigate|reload|shot` (a zero-dep
   DevTools client; reload with `navigate`, never `eval "location.reload()"`, whose reply dies with
   the page's context and hangs the driver — and prefer `navigate` over the `reload` subcommand,
