@@ -114,10 +114,17 @@ export class Game {
     if (reload?.mode === 'game' && hasSave()) this.continueGame();
     else if (reload?.mode === 'party') this.toParty({ online: reload.online, resume: !!reload.activity, reload });
     let last = performance.now();
+    // (Settings · Frame rate: requestAnimationFrame is the panel's own pacing, so "unlimited" means
+    //  leaving it alone and the two caps skip the vsyncs in between; dt accumulates either way, so a
+    //  capped run steps the world just as far, with fewer and longer frames)
+    const CAPS = { 60: 1000 / 60, 30: 1000 / 30 };
+    let lastRun = last;
     const loop = (ts) => {
+      const cap = CAPS[this.settings.fps] || 0;
+      if (cap && ts - lastRun < cap * 0.9) { requestAnimationFrame(loop); return; }
       const raw = (ts - last) / 1000;
       const dt = Math.max(0, Math.min(0.05, raw));
-      last = ts;
+      last = lastRun = ts;
       this.statsTick(raw);
       if (!this.paused) this.frame(dt);
       requestAnimationFrame(loop);

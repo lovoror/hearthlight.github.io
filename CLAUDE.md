@@ -93,6 +93,15 @@ python3 tools/devserver.py 8765        # static files + /__shot + /__lan + /ws p
   from 2048 at the outline pass, nothing the eye reads as a change. It is the knob to reach for
   when a phone is short of frames, and the draw-call count it saves is the honest measure of it:
   the counter now reads the whole frame (352 calls with the shadow pass, 95 without).
+- Settings · **Frame rate** (`src/state.js` `fps`: `'unlimited'` | `'60'` | `'30'`, default
+  `'unlimited'`) is a skip in the main loop (`src/game.js:116-131`), not a re-timing: `CAPS` holds
+  `1000 / 60` and `1000 / 30`, and a frame arriving sooner than `cap * 0.9` is dropped and
+  re-queued, so `dt` accumulates and the world advances the same distance. The `0.9` (rather than
+  `cap - 1`) is what stops vsync jitter from reading as 30. `'unlimited'` is no check at all: the
+  browser already paces to the panel, so it is the original behaviour rather than a cap, which is
+  why a touch device defaults to it. Browser-verified (`unlimited` 59.9 fps / 16.7 ms, `60` → 60.0 /
+  16.67, `30` → 30.5 / 33.1); the test phone's panel is **120 Hz** (`dumpsys display`: mode 2,
+  1440×3168 @120, is `defaultMode`), so 60 fps there is work-bound, not a vsync ceiling.
 - Driving a headless Chrome: `node tools/cdp.mjs eval|poll|navigate|reload|shot` (a zero-dep
   DevTools client; reload with `navigate`, never `eval "location.reload()"`, whose reply dies with
   the page's context and hangs the driver — and prefer `navigate` over the `reload` subcommand,

@@ -29,6 +29,10 @@ still procedural.
   reused for; the shadow pass is a second walk over the whole scene into a picture bigger than the
   one it lands on, so it is the first thing to move when frames are short. Auto keeps 1024 texels
   refreshed every other frame on a touch device, Low drops the map.
+- **Settings · Frame rate** (Unlimited / 60 / 30) — Unlimited is the plain `requestAnimationFrame`
+  loop: the browser already paces to the screen, so it is not a cap but the original behaviour, and
+  it is what a phone runs by default. The two numbers skip frames, so the world advances the same
+  distance on a 60 Hz laptop and a 120 Hz phone.
 - **Fixes that came out of the two above** — the title screen stops overlapping itself on a short
   phone canvas, the settings list scrolls instead of squeezing its rows together, banners and
   pause cards make room for the taller Chinese line, and the Android app takes the WebView's

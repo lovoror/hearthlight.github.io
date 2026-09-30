@@ -300,6 +300,7 @@ export class Menu {
       ['Display', HUD_NAMES[w.hud.mode()], 'hud'],
       ['Performance stats', st.stats ? 'On' : 'Off', 'stats'],
       ['Graphics', { auto: 'Auto', high: 'High', low: 'Low' }[st.quality || 'auto'] || 'Auto', 'quality'],
+      ['Frame rate', { unlimited: 'Unlimited', 60: '60', 30: '30' }[st.fps || 'unlimited'] || 'Unlimited', 'fps'],
       ['Adventure difficulty', (DIFFS[st.adventure] || DIFFS.normal).name, 'adventure'],
       ['Controls', { pad: 'Gamepad', phone: 'Phone', touch: 'Touch screen' }[device()] || 'Keyboard', 'controls'],
       ['Play with your phone', this.world.game.phone.connected ? 'Connected' : this.world.game.phone.net ? 'Waiting' : 'Not connected', 'phone'],
@@ -336,6 +337,9 @@ export class Menu {
     else if (key === 'rumble') { st.rumble = st.rumble === false; if (st.rumble) w.input.rumble(0.6, 0.4, 160); }
     else if (key === 'stats') st.stats = !st.stats;
     else if (key === 'quality') st.quality = cycle(['auto', 'high', 'low'], st.quality || 'auto');
+    // (`unlimited` is plain requestAnimationFrame: the browser already paces it to the panel, which
+    //  is why the other two are written as a cap and not the other way round)
+    else if (key === 'fps') st.fps = cycle(['unlimited', '60', '30'], st.fps || 'unlimited');
     else if (key === 'server') {
       // (the address is typed: the row starts from what this machine answers at, so the box
       //  opens with the LAN address already in it and an empty one falls back to config.js)
