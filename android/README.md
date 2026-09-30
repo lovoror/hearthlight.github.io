@@ -50,12 +50,12 @@ reuses it afterwards, so successive builds upgrade in place.
 7. **zipalign** — 4-byte aligned, page-aligned uncompressed `.so`/assets.
 8. **sign** — `apksigner` with the keystore, then `verify --print-certs`.
 
-## Why the WebView loads from `https://vps-ec093ef6.vps.ovh.ca`
+## Where the WebView's origin comes from
 
 `MainActivity` doesn't use `file:///android_asset/`: ES modules are
 cross-origin under `file://` and modern WebViews refuse them outright. It serves
 the bundled game from a **real https origin instead**, and that origin is not a
-free choice —
+free choice — it has to be one the relay will accept:
 
 `server/relay.mjs` checks the WebSocket handshake's `Origin` header. Only
 `https://vps-ec093ef6.vps.ovh.ca` and `https://hearthlight.github.io` are let
@@ -69,15 +69,23 @@ Origin: http://localhost:8765              -> 403
 Origin: null                               -> 403
 ```
 
-So `HOST = "vps-ec093ef6.vps.ovh.ca"` in `MainActivity.java`, which both puts the
-game in a secure context (localStorage, WebAudio, WebRTC all behave as on the
-web) and produces an `Origin` the relay trusts. `shouldInterceptRequest` serves
-anything it finds in `assets/` from the APK and returns `null` for everything
-else, so `/ws`, `/saves/*` and `/hello` still reach the real server.
+So the app takes the host from the relay the build was packaged against:
+`MainActivity.relayHost()` reads `assets/config.js` and uses the host of the
+first relay it names (`onlineRelay`, then `relay`), falling back to
+`vps-ec093ef6.vps.ovh.ca` if there is none. That keeps the origin in step with
+`-Relay` instead of pinning the app to one hard-coded server — build with
+`-Relay wss://party.example/ws` and the app speaks from
+`https://party.example`, so `party.example`'s relay has to list that origin.
+
+The origin also puts the game in a secure context (localStorage, WebAudio,
+WebRTC all behave as on the web), and `shouldInterceptRequest` serves anything it
+finds in `assets/` from the APK and returns `null` for everything else, so
+`/ws`, `/saves/*` and `/hello` still reach the real server.
 
 Party Mode on the phone is therefore server-based: the lobby shows a QR code
-pointing at `https://vps-ec093ef6.vps.ovh.ca/pad.html`, and controllers are
-phones with a browser (or the APK) joined to the same room code.
+pointing at that server's `pad.html` (or at the address typed in
+Settings · Party server), and controllers are phones with a browser (or the APK)
+joined to the same room code.
 
 ## Options
 

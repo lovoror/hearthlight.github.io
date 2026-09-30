@@ -129,12 +129,14 @@ export class Game {
     const s = this.stats;
     if (!s.on || !(dt > 0)) return;
     s.acc += dt; s.n++;
-    s.peak = Math.max(s.peak, dt * 1000);
+    // (the peak is published when the window closes, so it never reads as a frame that took 0 ms)
+    s.peakNow = Math.max(s.peakNow || 0, dt * 1000);
     if (s.acc >= 0.25) {
       const fps = s.n / s.acc, ms = (s.acc / s.n) * 1000;
       s.fps = s.fps ? s.fps * 0.6 + fps * 0.4 : fps;
       s.ms = s.ms ? s.ms * 0.6 + ms * 0.4 : ms;
-      s.acc = 0; s.n = 0; s.peak = 0;
+      s.peak = s.peakNow; s.peakNow = 0;
+      s.acc = 0; s.n = 0;
     }
   }
 

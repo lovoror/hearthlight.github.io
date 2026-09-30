@@ -54,7 +54,8 @@ python3 tools/devserver.py 8765        # static files + /__shot + /__lan + /ws p
   android/Hearthlight.apk [--extract dir]` inspects one, and `HEARTHLIGHT_ROOT=<extracted>
   python tools/devserver.py 8777` plays it in a browser (a plain `python -m http.server` serves
   `.mjs` as `text/plain`, which the browser refuses: use devserver). The WebView's origin must be
-  one `server/relay.mjs`'s `ORIGINS` accepts, so `MainActivity.HOST` is the VPS host and any path
+  one `server/relay.mjs`'s `ORIGINS` accepts, so `MainActivity.relayHost()` reads the host of the
+  first relay named in the packaged `config.js` (falling back to the VPS host) and any path
   not in `assets/` (the relay's `/ws`, `/saves/*`) falls through to the real network. A party on
   the local network is plain `ws://`, so the WebView also needs `MIXED_CONTENT_ALWAYS_ALLOW`.
 - Parties run on whatever server is set in **Settings · Party server** (one address — the relay and

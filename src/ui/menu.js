@@ -876,7 +876,8 @@ export class Menu {
       }
       this.rowRects.push({ x: px + 8, y: y - 3, w: pw - 16, h: rh - 2, i });
     });
-    if (rows.length > show) drawText(ctx, `${first + 1}-${Math.min(first + show, rows.length)}/${rows.length}`, px + pw - 12, py + 10, { color: UI.inkSoft, align: 'right' });
+    // (under the last row, not in the top corner: that is where the first row keeps its number)
+    if (rows.length > show) drawText(ctx, `${first + 1}-${Math.min(first + show, rows.length)}/${rows.length}`, px + pw - 12, top + show * rh - 2, { color: UI.inkSoft, align: 'right' });
     const help = (device() === 'pad' ? [
       t('Controls: the stick moves (push it far to run) · {a} use · {b} jump · {prev}/{next} hotbar', { a: ctl('interact'), b: ctl('jump'), prev: ctl('hotPrev'), next: ctl('hotNext') }),
       t('{start} pause · {select} bag, journal & map · {x} special · {y} dodge', { start: ctl('pause'), select: ctl('menu'), x: ctl('special'), y: ctl('dodge') }),

@@ -29,24 +29,31 @@ import java.io.InputStream;
  * WebRTC and the online relay all behave exactly as on the web) while the game
  * itself never touches the network.
  *
- * The origin is the public copy's own host rather than a made-up one, because
- * the relay checks the Origin header of every socket and only knows the sites it
- * serves (server/relay.mjs, ORIGINS): pretending to be one of them is what makes
- * Party Mode work from the app. A request we have no asset for is left alone and
- * goes to the network, which is how the relay, the phone page and the online
- * saves stay reachable.
+ * Which origin that is comes out of the packaged config.js: the host of the relay
+ * the build points at (`android/build.ps1 -Relay`, or the public one by default).
+ * It matters because the relay checks the Origin header of every socket and only
+ * knows the sites it serves (server/relay.mjs, ORIGINS): the app has to speak from
+ * an origin that relay accepts, and reading it from config.js means pointing a
+ * build at another server moves the origin with it instead of stranding it on one
+ * hard-coded host. A request we have no asset for is left alone and goes to the
+ * network, which is how the relay, the phone page and the online saves stay
+ * reachable.
  */
 public class MainActivity extends Activity {
 
   private static final String TAG = "Hearthlight";
-  private static final String HOST = "vps-ec093ef6.vps.ovh.ca";
-  private static final String START = "https://" + HOST + "/index.html";
+  // fallback only: config.js is expected to name a relay, and normally does
+  private static final String FALLBACK_HOST = "vps-ec093ef6.vps.ovh.ca";
 
+  private String host = FALLBACK_HOST;
+  private String start;
   private WebView web;
   private long lastBack;
 
   @Override protected void onCreate(Bundle state) {
     super.onCreate(state);
+    host = relayHost();
+    start = "https://" + host + "/index.html";
     getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
     web = new WebView(this);
@@ -75,8 +82,37 @@ public class MainActivity extends Activity {
     setContentView(web);
     hideBars();
 
-    if (state == null) web.loadUrl(START);
+    if (state == null) web.loadUrl(start);
     else web.restoreState(state);
+  }
+
+  /**
+   * The host of the relay this build was packaged against, read out of assets/config.js
+   * (the online relay first, then the plain one). Only a fallback is compiled in.
+   */
+  private String relayHost() {
+    String cfg = "";
+    try (InputStream in = getAssets().open("config.js")) {
+      java.io.ByteArrayOutputStream all = new java.io.ByteArrayOutputStream();
+      byte[] buf = new byte[4096];
+      int n;
+      while ((n = in.read(buf)) > 0) all.write(buf, 0, n);
+      cfg = all.toString("UTF-8");
+    } catch (IOException e) {
+      Log.w(TAG, "no config.js in assets, using " + FALLBACK_HOST);
+      return FALLBACK_HOST;
+    }
+    java.util.regex.Matcher m = java.util.regex.Pattern
+        .compile("(?:onlineRelay|relay)\\s*:\\s*['\"](wss?|https?)://([^/'\"\\s]+)").matcher(cfg);
+    while (m.find()) {
+      String h = m.group(2);
+      if (h != null && !h.isEmpty()) {
+        Log.i(TAG, "origin " + h + " (from config.js " + m.group() + ")");
+        return h;
+      }
+    }
+    Log.w(TAG, "config.js names no relay, using " + FALLBACK_HOST);
+    return FALLBACK_HOST;
   }
 
   /** Full screen, no status or navigation bar, and it stays that way. */
@@ -134,11 +170,11 @@ public class MainActivity extends Activity {
         null);
   }
 
-  /** Everything under https://<HOST>/ that ships in the APK comes from assets/ — the rest is the network's. */
+  /** Everything under https://<host>/ that ships in the APK comes from assets/ — the rest is the network's. */
   private class Local extends WebViewClient {
     @Override public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest req) {
       Uri u = req.getUrl();
-      if (u == null || !HOST.equals(u.getHost())) return null;
+      if (u == null || !host.equals(u.getHost())) return null;
       String path = u.getPath();
       if (path == null || path.length() == 0 || "/".equals(path)) path = "/index.html";
       while (path.startsWith("/")) path = path.substring(1);
