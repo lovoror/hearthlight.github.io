@@ -2,6 +2,35 @@
 
 *A cozy little life in Marigold Cove — and a big adventure beyond it.*
 
+## What this copy adds
+
+This is [the original Hearthlight](https://github.com/Hearthlight/hearthlight.github.io) with a
+few things on top of it — same spirit throughout: no build step, no binary assets, everything
+still procedural.
+
+- **简体中文, in full** — the game speaks Chinese from end to end: 43 dictionaries (1987 strings,
+  the party's spoken lines as well), the same files as French, checked by
+  `node tools/i18n-scan.mjs`. Chinese has its own bitmap face — 7452 glyphs rasterised offline
+  from Source Han Sans SC (`python tools/gen-cjkfont.py` → `src/art/cjkfont.js`) — and its own
+  layout: its ink is 13 rows against the Latin font's 9, so stacked text steps by `lineStep(n)`,
+  `wrap()` breaks between characters, and closing punctuation hangs past the margin. Pick it in
+  Settings, or let your system pick it.
+- **Android** — the whole game in one ~3 MB APK, Party Mode included: a single WebView around the
+  very files the website serves, built with the Android SDK's own tools and a JDK (**no Gradle, no
+  Android Studio project, no npm install**). See the [Android guide](android/README.md).
+- **Settings · Party server** — one address, and both the relay and the page your phones open come
+  out of it; the machine's own LAN address is offered as the default, so a party on your Wi-Fi
+  needs nothing typed at all (the dev server *is* the relay: `python tools/devserver.py 8765`).
+- **Settings · Performance stats** — fps, the frame's ms and its peak, triangles, draw calls,
+  meshes, textures and shaders, in the corner of the screen (`?debug=1` forces it on for a run).
+- **Fixes that came out of the two above** — the title screen stops overlapping itself on a short
+  phone canvas, the settings list scrolls instead of squeezing its rows together, banners and
+  pause cards make room for the taller Chinese line, and the Android app takes the WebView's
+  origin from the `config.js` it ships with rather than a hard-coded host.
+
+The game itself — the story, the engine, Party Mode, the procedural art and sound — is the
+original's work, and the [LICENSE](LICENSE) is unchanged (MIT).
+
 > **This is a demo.** Hearthlight is a hobby project, playable from start to end, but it hasn't
 > been tested all the way through by real players yet: the ten chapters, the eight heroes and
 > Party Mode were played by test bots, not by crowds. Expect rough edges, a balance to tune and
