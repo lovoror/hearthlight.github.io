@@ -34,8 +34,8 @@ single image or audio file in the game.
     anyway** (in French: *Informations complémentaires* → *Exécuter quand même*).
   - **Linux**: make the `.AppImage` executable (`chmod +x Hearthlight-*.AppImage`) and run it.
 - **Build it yourself** — follow the [local setup and build instructions](#run-it-yourself).
-- **Languages**: English, Français, Español, Deutsch, Italiano — picked from your system, changed
-  in Settings (the phones follow the big screen).
+- **Languages**: English, Français, Español, Deutsch, Italiano, 简体中文 — picked from your system,
+  changed in Settings (the phones follow the big screen).
 
 ### Party Mode: 1–8 players on one screen
 
@@ -169,6 +169,22 @@ machine and do not publish them.
 
 See the **[step-by-step desktop build guide](desktop/README.md)** for prerequisites, testing
 your package, updating your source copy and troubleshooting.
+
+### Play on Android
+
+The whole game also fits in one `android/Hearthlight.apk`, about 3 MB: a single WebView around
+the same files the website serves, Party Mode included. It is built with the Android SDK's own
+tools and a JDK, so there is **no Gradle, no Android Studio project and nothing to install from
+npm**:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File android/build.ps1 -JavaHome <the folder holding bin/java.exe>
+```
+
+Phones with the app join the hosted relay, so Party Mode works over any network: the lobby's QR
+code opens the hosted controller page, and friends can play from their browser too. The
+**[Android build guide](android/README.md)** lists what to install, every option the script takes,
+and how to check a build when no phone is attached.
 
 ## The Grand Monde: a story in ten chapters (World v7)
 
@@ -445,11 +461,13 @@ own jungle music, tropical showers, morning mist and fireflies. In solo and in P
 
 ## Languages
 
-English, French, Spanish, German and Italian, picked automatically from the browser (change it in
-the settings, or on the crowned phone in Party Mode). The phones follow the big screen's language.
-Solo lines speak to *you* (tu · tú · du · tu); in Party Mode the story speaks to the whole group
-(vous · ustedes · ihr · voi). Each language has its translation guide (`tools/i18n-glossary*.md`);
-`node tools/i18n-scan.mjs` checks that nothing is missing in any of them.
+English, French, Spanish, German, Italian and Simplified Chinese, picked automatically from the
+browser (change it in the settings, or on the crowned phone in Party Mode). The phones follow the
+big screen's language. Solo lines speak to *you* (tu · tú · du · tu · 你); in Party Mode the story
+speaks to the whole group (vous · ustedes · ihr · voi · 你们). Chinese is drawn with its own bitmap
+face, rasterised offline from Source Han Sans SC (`python tools/gen-cjkfont.py`). Each language has
+its translation guide (`tools/i18n-glossary*.md`); `node tools/i18n-scan.mjs` checks that nothing is
+missing in any of them.
 
 ![The pause menu in French, Spanish, German and Italian](docs/screenshots/languages.png)
 
@@ -551,8 +569,9 @@ src/
             world events, buddies
   combat/   heroes, gloom creatures, blessings and the fighting itself (v3/: statuses,
             bestiary, bosses, talents, gear)
-  lang/     translations (French), used through src/i18n.js
+  lang/     translations (French, Spanish, German, Italian & Chinese), used through src/i18n.js
   pad/      the phone controller page (pad.html)
 tools/      dev server (static files, screenshots, party relay), map dump, party test bots,
             translation scanner & glossary
+android/    the Android app: a WebView shell, its icon and a build script that needs no Gradle
 ```

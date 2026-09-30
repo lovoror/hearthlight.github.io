@@ -7,7 +7,7 @@
 // One menu model (`tabs()`), two renderers: the big screen draws it here, the
 // host phone gets it as data (`{t:'hmenu'}`) and sends back `{t:'hact'}`.
 
-import { drawText, measure, wrap } from '../engine/font.js';
+import {drawText, measure, wrap, lineStep } from '../engine/font.js';
 import { panel, UI, fitText, ctl } from '../ui/ui.js';
 import { audio } from '../engine/audio.js';
 import { saveSettings } from '../state.js';
@@ -415,7 +415,7 @@ export class Host {
     ctx.fillStyle = '#dfc9a4'; ctx.fillRect(px + 8, footY, pw - 16, 1);
     const selected = items[M.sel];
     const description = selected?.sub && !invite ? t(selected.sub) : '';
-    wrap(description, pw - 20).slice(0, 2).forEach((line, i) => drawText(ctx, line, px + 10, footY + 5 + i * 9, { color: UI.inkSoft }));
+    wrap(description, pw - 20).slice(0, 2).forEach((line, i) => drawText(ctx, line, px + 10, footY + 5 + i * lineStep(9), { color: UI.inkSoft }));
     const hint = t('↑↓ choose · ←→ change or switch tab · {a} confirm · {b} close', { a: ctl('interact'), b: ctl('cancel') });
     drawText(ctx, fitText(hint, pw - 16), px + pw / 2, py + ph - 11, { color: '#a38a65', align: 'center' });
   }

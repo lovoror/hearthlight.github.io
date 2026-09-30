@@ -32,8 +32,12 @@ import threading
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SHOTS = os.path.join(ROOT, "screenshots")
+HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# HEARTHLIGHT_ROOT serves some other copy of the game from here — the APK's own
+# assets, unpacked with `python tools/apkcheck.py <apk> --extract <dir>` — which is
+# how the packaged build gets tested without a device.
+ROOT = os.environ.get("HEARTHLIGHT_ROOT") or HERE
+SHOTS = os.path.join(HERE, "screenshots")
 REELS = os.path.join(SHOTS, "reel")
 WS_GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ"

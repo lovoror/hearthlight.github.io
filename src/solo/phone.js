@@ -8,7 +8,7 @@
 import { PartyNet } from '../party/net.js';
 import { mapImage, mapBase, mapUpdate } from '../party/worldmap.js';
 import { qrCanvas } from '../party/qr.js';
-import { drawText, wrap } from '../engine/font.js';
+import {drawText, wrap, lineStep } from '../engine/font.js';
 import { panel, button, UI, fitText } from '../ui/ui.js';
 import { ITEMS } from '../data/items.js';
 import { padIcons } from '../combat/classes.js';
@@ -289,7 +289,7 @@ export class SoloPhone {
     // how it plays
     const help = t('Stick: walk (push far to run) · A use · B jump · X special · Y dodge · the phone also opens your bag, map, journal & hero page.');
     const hl = wrap(help, pw - 28).slice(0, 3);
-    hl.forEach((l, i) => drawText(ctx, l, px + 14, qy + qs + 8 + i * 10, { color: UI.inkSoft }));
+    hl.forEach((l, i) => drawText(ctx, l, px + 14, qy + qs + 8 + i * lineStep(10), { color: UI.inkSoft }));
     // buttons
     const btns = [['close', t('Done')]];
     if (this.pad || (N && N.code)) btns.push(['stop', t('Stop the phone')]);

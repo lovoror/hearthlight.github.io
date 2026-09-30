@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Hearthlight for Android: one Activity holding a WebView that serves the game
+     out of assets/ on a made-up https origin (see MainActivity). No Gradle, no
+     libraries: aapt2 → javac → d8 → zipalign → apksigner, see build.ps1. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.hearthlight.game"
+    android:versionCode="1"
+    android:versionName="1.0">
+
+  <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="35" />
+
+  <!-- Party Mode: the big screen talks to the relay over the internet -->
+  <uses-permission android:name="android.permission.INTERNET" />
+  <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+  <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+  <uses-feature android:name="android.hardware.gamepad" android:required="false" />
+
+  <application
+      android:label="@string/app_name"
+      android:icon="@mipmap/ic_launcher"
+      android:roundIcon="@mipmap/ic_launcher_round"
+      android:hardwareAccelerated="true"
+      android:allowBackup="true"
+      android:isGame="true"
+      android:theme="@style/GameTheme">
+
+    <activity
+        android:name=".MainActivity"
+        android:exported="true"
+        android:launchMode="singleTask"
+        android:screenOrientation="sensorLandscape"
+        android:resizeableActivity="true"
+        android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden|keyboard|navigation|uiMode|density|fontScale">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.LAUNCHER" />
+      </intent-filter>
+    </activity>
+  </application>
+</manifest>

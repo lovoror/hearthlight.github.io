@@ -3,7 +3,7 @@
 // works with the arrows + E, a gamepad (stick + A) and the mouse or a finger:
 // every control is an item with a rect, and the arrows jump to the nearest one.
 
-import { drawText, measure, wrap } from '../engine/font.js';
+import {drawText, measure, wrap, lineStep } from '../engine/font.js';
 import { UI, fitText } from '../ui/ui.js';
 import { CLASSES, CLASS_ORDER } from '../combat/classes.js';
 import { drawClassIcon, drawGearIcon, drawMountIcon, drawPetIcon } from '../combat/icons.js';
@@ -238,13 +238,13 @@ export class HeroTab {
       if (on) this.home = 'cls:' + id;
     });
     const dy = A.y + 16 + rows * (ch + 3), dl = wrap(t(CLASSES[hov].desc), rw).slice(0, Math.max(1, Math.floor((A.y + A.h - dy) / 9)));
-    dl.forEach((l, j) => drawText(ctx, l, rx, dy + j * 9, { color: UI.inkSoft }));
+    dl.forEach((l, j) => drawText(ctx, l, rx, dy + j * lineStep(9), { color: UI.inkSoft }));
     // how to fight, on this device
     const kn = (k) => W.keyName(k);
     const help = wrap(this.world.input.touchMode ? t('The round buttons: attack (hold it: a big one) · {special} · dodge · jump', { special: t(sp.name) })
       : t('{a} attack (hold it: a big one) · {x} {special} · {y} dodge · {b} jump', { a: kn('a'), x: kn('x'), y: kn('y'), b: kn('b'), special: t(sp.name) }), lw);
-    const hy = Math.max(y + 2, A.y + A.h - help.length * 9);
-    help.forEach((l, i) => drawText(ctx, l, A.x, hy + i * 9, { color: '#b8a080' }));
+    const hy = Math.max(y + 2, A.y + A.h - help.length * lineStep(9));
+    help.forEach((l, i) => drawText(ctx, l, A.x, hy + i * lineStep(9), { color: '#b8a080' }));
   }
 
   // ---- talents: three specialisations side by side, five rows each (the
@@ -290,8 +290,8 @@ export class HeroTab {
       if (rk > 0 && rk < T.max && T.n) { y += 2; wrap(t('Next rank: {what}', { what: t(T.desc, { n: valueAt(T, rk + 1) }) }), dw).slice(0, 3).forEach((l) => { drawText(ctx, l, dx, y, { color: '#7d4f93' }); y += 10; }); }
       y += 4;
       if (!why) this.btn(ctx, 'learn', dx, y, dw, 15, rk ? t('Rank up') : t('Learn it'), () => this.learn(T.id), '#4f955a');
-      else wrap(t(why, { n: ROW_NEED[T.row - 1] }), dw).slice(0, 2).forEach((l, i) => drawText(ctx, l, dx, y + 3 + i * 10, { color: why === 'Fully learned!' ? '#4f955a' : UI.inkSoft }));
-    } else wrap(t('Pick a talent to see what it does. A row opens once enough points sit in its branch; the last one is an ultimate ({key}).', { key: W.keyName('u') }), dw).slice(0, 7).forEach((l, i) => drawText(ctx, l, dx, y + i * 10, { color: UI.inkSoft }));
+      else wrap(t(why, { n: ROW_NEED[T.row - 1] }), dw).slice(0, 2).forEach((l, i) => drawText(ctx, l, dx, y + 3 + i * lineStep(10), { color: why === 'Fully learned!' ? '#4f955a' : UI.inkSoft }));
+    } else wrap(t('Pick a talent to see what it does. A row opens once enough points sit in its branch; the last one is an ultimate ({key}).', { key: W.keyName('u') }), dw).slice(0, 7).forEach((l, i) => drawText(ctx, l, dx, y + i * lineStep(10), { color: UI.inkSoft }));
     // start again
     if (spent(picks)) this.btn(ctx, 'reset', dx, A.y + A.h - 15, dw, 15, this.asking('reset') ? t('Press again') : t('Reset talents'), () => this.twice('reset', () => W.progress.onMsg(W.me, { t: 'talentReset' })), this.asking('reset') ? '#c8454f' : '#8a7a98');
   }
@@ -331,7 +331,7 @@ export class HeroTab {
       this.item('bag:' + it.id, x, y, cell, cell, () => this.wear(it), () => { this.selGear = it.id; });
       if (!this.home) this.home = 'bag:' + it.id;
     });
-    if (!G.bag.length) wrap(t('Open treasure chests out in the wild lands to find weapons, runes and charms.'), leftW).slice(0, 3).forEach((l, i) => drawText(ctx, l, A.x, by + 14 + i * 10, { color: UI.inkSoft }));
+    if (!G.bag.length) wrap(t('Open treasure chests out in the wild lands to find weapons, runes and charms.'), leftW).slice(0, 3).forEach((l, i) => drawText(ctx, l, A.x, by + 14 + i * lineStep(10), { color: UI.inkSoft }));
     // the selected one
     const it = find(this.selGear);
     const dx = A.x + leftW + 10, dw = A.w - leftW - 10;
@@ -351,7 +351,7 @@ export class HeroTab {
       const cost = itemUpgrade(it);
       if (cost) { this.btn(ctx, 'up', dx, y, dw, 15, t('Upgrade · {n} ★', { n: cost }), () => this.upgrade(it), pr.dust >= cost ? '#b8862a' : '#9a8a80'); y += 19; }
       this.btn(ctx, 'melt', dx, y, dw, 15, this.asking('melt') ? t('Press again') : t('Melt · +{n} ★', { n: meltValue(it) }), () => this.twice('melt', () => { W.progress.onMsg(W.me, { t: 'gear', op: 'drop', id: it.id }); this.selGear = null; audio.sfx('sparkle', { volume: 0.5 }); }), this.asking('melt') ? '#c8454f' : '#8a5a4a');
-    } else if (G.bag.length) wrap(t('Pick a weapon, a rune or a charm to see what it does'), dw).slice(0, 3).forEach((l, i) => drawText(ctx, l, dx, y + i * 10, { color: UI.inkSoft }));
+    } else if (G.bag.length) wrap(t('Pick a weapon, a rune or a charm to see what it does'), dw).slice(0, 3).forEach((l, i) => drawText(ctx, l, dx, y + i * lineStep(10), { color: UI.inkSoft }));
     wrap(t('Stardust comes from the gloom you chase away — and from melting gear.'), A.w).slice(0, 2).forEach((l, i, a) => drawText(ctx, l, A.x, A.y + A.h - (a.length - i) * 10 + 2, { color: '#b8a080' }));
   }
 
@@ -386,7 +386,7 @@ export class HeroTab {
       // where it lives and what it loves (a hint to tame it)
       foodIcon(ctx, D.food, x + 5, y + 33);
       const fl = wrap(t('Loves {food}', { food: t(FOODS[D.food].a) }), cw - 20).slice(0, chh >= 62 ? 2 : 1);
-      fl.forEach((l, j) => drawText(ctx, l, x + 16, y + 32 + j * 9, { color: UI.inkSoft }));
+      fl.forEach((l, j) => drawText(ctx, l, x + 16, y + 32 + j * lineStep(9), { color: UI.inkSoft }));
       if (chh >= 54) drawText(ctx, fitText(t(ZNAME[D.zones[0]] || ''), cw - 10), x + 5, y + chh - 11, { color: '#b8a080' });
       this.item('mnt:' + kind, x, y, cw, chh, have && !on ? () => { M.choose(W.me, kind); audio.sfx('confirm'); W.toast(t('{animal} will come when you whistle', { animal: cap(t(D.the)) })); } : null);
       if (on || (!this.home && i === 0)) this.home = 'mnt:' + kind;
@@ -411,7 +411,7 @@ export class HeroTab {
       drawText(ctx, fitText(have ? t(K.name) : '???', cw - 38), x + 35, y + 5, { color: have ? UI.ink : '#8a7a70' });
       drawText(ctx, fitText(on ? '✓ ' + t('Follows you') : have ? t('Call it') : t('Still in the gloom'), cw - 38), x + 35, y + 16, { color: on ? '#4f955a' : UI.inkSoft });
       // (where to find one)
-      if (!have) wrap(t(K.hint), cw - 10).slice(0, chh >= 58 ? 3 : 2).forEach((l, j) => drawText(ctx, l, x + 5, y + 31 + j * 9, { color: '#b8a080' }));
+      if (!have) wrap(t(K.hint), cw - 10).slice(0, chh >= 58 ? 3 : 2).forEach((l, j) => drawText(ctx, l, x + 5, y + 31 + j * lineStep(9), { color: '#b8a080' }));
       else drawText(ctx, fitText(t('Nips at the gloom'), cw - 10), x + 5, y + 32, { color: '#b8a080' });
       this.item('pet:' + kind, x, y, cw, chh, have && !on ? () => { B.choose(W.me, kind); audio.sfx('confirm'); } : null);
       if (on || (!this.home && i === 0)) this.home = 'pet:' + kind;

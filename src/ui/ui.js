@@ -1,5 +1,5 @@
 // UI drawing kit: paper panels, tags, buttons, hearts, key hints.
-import { drawText, measure, wrap, LINE_H } from '../engine/font.js';
+import {drawText, measure, wrap, LINE_H, lineStep } from '../engine/font.js';
 import { COLORS } from '../art/palette.js';
 import { getLang, t } from '../i18n.js';
 
@@ -247,7 +247,7 @@ export function keyHint(ctx, x, y, key, label, { center = true, dark = true } = 
 // (wrapW: longer lines wrap onto a few rows)
 export function bubble(ctx, x, y, text, { color = '#3b2a2e', bg = '#fff7e6', wrapW = 0 } = {}) {
   const lines = wrapW && measure(text) > wrapW ? wrap(text, wrapW) : [text];
-  const w = Math.max(...lines.map((l) => measure(l))) + 8, h = 3 + lines.length * 10;
+  const w = Math.max(...lines.map((l) => measure(l))) + 8, h = 3 + lines.length * lineStep(10);
   const bx = Math.round(x - w / 2), by = Math.round(y - h - 4);
   ctx.fillStyle = 'rgba(20,14,28,0.3)';
   ctx.fillRect(bx + 1, by + 2, w, h);
@@ -259,7 +259,7 @@ export function bubble(ctx, x, y, text, { color = '#3b2a2e', bg = '#fff7e6', wra
   ctx.fillRect(Math.round(x) - 1, by + h, 3, 1); ctx.fillRect(Math.round(x), by + h + 1, 1, 2);
   ctx.fillStyle = bg;
   ctx.fillRect(Math.round(x), by + h - 1, 1, 2);
-  lines.forEach((l, i) => drawText(ctx, l, bx + 4, by + 2 + i * 10, { color }));
+  lines.forEach((l, i) => drawText(ctx, l, bx + 4, by + 2 + i * lineStep(10), { color }));
 }
 
 // Emote bubbles drawn as tiny pixel icons (heart, !, ?, note, zzz, ...)

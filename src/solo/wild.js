@@ -38,7 +38,7 @@ import { drawClassIcon } from '../combat/icons.js';
 import { VALLEY } from '../world/big/layout.js';
 import { areaAt } from '../world/overworld.js';
 import { fogSeen, FOG_W, FOG_H } from '../state.js';
-import { drawText, measure, wrap } from '../engine/font.js';
+import {drawText, measure, wrap, lineStep } from '../engine/font.js';
 import { UI, bubble, keyCap, panel, emote, ctl, device, isFace, faceGlyph } from '../ui/ui.js';
 import { audio } from '../engine/audio.js';
 import { t } from '../i18n.js';
@@ -1080,7 +1080,7 @@ export class Wild {
     const cw = (it) => (face(it) ? 13 : measure(it.key) + 6) + measure(it.label) + 10;
     const rowW = items.reduce((a, it) => a + cw(it), 0) - 4;
     const lines = hint ? wrap(hint, Math.min(W - 40, 300)) : [];
-    const pw = Math.max(rowW, ...lines.map((l) => measure(l))) + 14, ph = (items.length ? 14 : 0) + lines.length * 10 + 6;
+    const pw = Math.max(rowW, ...lines.map((l) => measure(l))) + 14, ph = (items.length ? 14 : 0) + lines.length * lineStep(10) + 6;
     let px = Math.round(W / 2 - pw / 2), py = Math.min(H - 38, bottom) - ph;
     // (out of the toasts' way: beside them if there's room, else above)
     if (avoid && px < avoid.x1 + 4 && py + ph > avoid.y0 - 2) {
@@ -1104,7 +1104,7 @@ export class Wild {
       }
       y += 14;
     }
-    lines.forEach((l, i) => drawText(ctx, l, cx, y + i * 10, { color: '#f6d38f', align: 'center' }));
+    lines.forEach((l, i) => drawText(ctx, l, cx, y + i * lineStep(10), { color: '#f6d38f', align: 'center' }));
   }
 
   // the world map's marks: camps, lairs, waystones, secrets, races, events, the Festival Ring

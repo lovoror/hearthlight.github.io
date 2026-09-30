@@ -24,7 +24,7 @@ python3 tools/devserver.py 8765        # static files + /__shot + /__lan + /ws p
   `warp(x, z)`, `clearWave()`, `skipTalk()`, `autoplay('lobby')`. Bots talk to the real relay.
 - `window.__errs` (filled by `T.boot`) and the console must stay at **0 errors**.
 - Translations: `node tools/i18n-scan.mjs` must report **0 missing** in every language (fr, es,
-  de, it — and each one's party lines; `--list` prints them, `--lang=de` one language);
+  de, it, zh — and each one's party lines; `--list` prints them, `--lang=de` one language);
   `node tools/i18n-check.mjs es` compares a language's files with their French twins. Screens in a
   language: `tools/langshots.js` (`start('de')`). Syntax check: `node --check file.js`.
 - Remote play (`play.html#CODE.key`, a friend at home) needs the Node relay — the Python dev
@@ -48,6 +48,17 @@ python3 tools/devserver.py 8765        # static files + /__shot + /__lan + /ws p
   `screenshots/reel/`) with captions in the pixel font, a real `pad.html` phone and the game's own
   sounds re-rendered offline; `tools/reelcut.py` cuts them after `tools/trailer.edl.json`. The
   recipe is in `trailer.js`'s header (`TR.all()` ≈ 10 min, `TR.mix()`, then `reelcut.py cut`).
+- Android: `powershell -ExecutionPolicy Bypass -File android/build.ps1 -JavaHome "<a jbr folder>"`
+  packs the checkout's own files into `android/Hearthlight.apk` with the SDK's tools alone
+  (aapt2 → javac → d8 → apkzip → zipalign → apksigner, no Gradle). `python tools/apkcheck.py
+  android/Hearthlight.apk [--extract dir]` inspects one, and `HEARTHLIGHT_ROOT=<extracted>
+  python tools/devserver.py 8777` plays it in a browser (a plain `python -m http.server` serves
+  `.mjs` as `text/plain`, which the browser refuses: use devserver). The WebView's origin must be
+  one `server/relay.mjs`'s `ORIGINS` accepts, so `MainActivity.HOST` is the VPS host and any path
+  not in `assets/` (the relay's `/ws`, `/saves/*`) falls through to the real network.
+- Driving a headless Chrome: `node tools/cdp.mjs eval|poll|navigate|reload|shot` (a zero-dep
+  DevTools client; reload with `navigate`/`reload`, never `eval "location.reload()"`, whose reply
+  dies with the page's context and hangs the driver). Keep `--user-data-dir` outside the repo.
 
 ### Known pitfalls
 
@@ -112,15 +123,23 @@ python3 tools/devserver.py 8765        # static files + /__shot + /__lan + /ws p
   (`updateChips`: only non-everyday labels, shown when new or when standing still, gone once
   pressed) — a new action needs only its `ctxFor` label.
 - **Text**: every visible string goes through `t('English text', vars)` (or `tn` for plurals);
-  the English text is the key. Five languages: French in `src/lang/fr/*.js` (new content → a new
+  the English text is the key. Six languages: French in `src/lang/fr/*.js` (new content → a new
   file, registered in `src/lang/fr/index.js`), following `tools/i18n-glossary.md`: tutoiement,
-  French typography (space before `! ? : ;`, `« »`, `’`, `…`); Spanish, German, Italian in
-  `src/lang/{es,de,it}/` — the same files as French (same keys, `_FR` exports → `_ES/_DE/_IT`,
+  French typography (space before `! ? : ;`, `« »`, `’`, `…`); Spanish, German, Italian and Chinese
+  in `src/lang/{es,de,it,zh}/` — the same files as French (same keys, `_FR` exports → `_ES/_DE/_IT/_ZH`,
   `index.js` from `node tools/i18n/mkindex.mjs xx`), each with its guide
-  (`tools/i18n-glossary-{es,de,it}.md`), its names (`tools/i18n/names-xx.json`) and a translator's
-  brief (`tools/i18n/brief-xx.md`). A new string → all four languages. Lines said to the whole
-  party go in a chapter file's `__group` (vous · ustedes · ihr · voi). Dictionaries load on demand
-  (`loadLang`). The dialogue box translates `say()` texts itself — don't double-translate.
+  (`tools/i18n-glossary-{es,de,it}.md`, `tools/i18n/brief-zh.md`), its names
+  (`tools/i18n/names-xx.json`, rebuilt with `node tools/i18n/names.mjs xx`) and a translator's
+  brief (`tools/i18n/brief-xx.md`). A new string → all five translations. Lines said to the whole
+  party go in a chapter file's `__group` (vous · ustedes · ihr · voi · 你们). Dictionaries load on
+  demand (`loadLang`). The dialogue box translates `say()` texts itself — don't double-translate.
+- **Chinese layout**: the UI font is hand-drawn bitmaps, so Chinese has its own face rasterised
+  offline from Source Han Sans SC (`python tools/gen-cjkfont.py` → `src/art/cjkfont.js`, registered
+  by `src/i18n.js` when the language is `zh`). Its ink is 13 rows against the Latin font's 9, so
+  stacked text must step by `lineStep(n)` and reserve room with `.length * lineStep(n)` — never a
+  bare 9/10/11/12, which Chinese would overlap. `lineStep` returns its argument unchanged in every
+  other language, so their layout is untouched. `wrap()` breaks Chinese between characters and
+  hangs closing punctuation past the margin.
 - **Solo & Party share their systems**: the solo game runs Party Mode's systems (zones, swim,
   vehicles, mounts, combat, camps, lairs, progress, travel, secrets, races, events, the Festival
   Ring) through `src/solo/wild.js`, a "party of one" implementing the party API they use
@@ -224,7 +243,7 @@ src/models/v7/ kit.js, gloomstage.js (the flying opera house), props7.js, dawn7.
               peaks & limestone pillars)
 src/pad/      the phone controller (pad.html) — canvas UI, talks to the relay; padmap.js
               (the phone's own world map: pinch, drag, tap — fed by worldmap.js mapBase/mapUpdate)
-src/lang/     fr/ es/ de/ it/ — the dictionaries (keys = English source text), loaded on demand
+src/lang/     fr/ es/ de/ it/ zh/ — the dictionaries (keys = English source text), loaded on demand
 tools/        devserver.py, partybots.js, sagatest.js (the saga played by itself: `V.solo`,
               `V.play`, `V.autoplay`, `V.toChapter(n)`), sagarun.js (a chapter played by the bots
               in the background: `start(mode, n, [chapters], class, marks)`, poll
@@ -240,12 +259,20 @@ tools/        devserver.py, partybots.js, sagatest.js (the saga played by itself
               parks/ (the National Park mode: fetch.py builds each national park's data pack into
               the git-ignored parks/cache/ — NPS boundary, points of interest, trails & roads, the
               NPS map catalogue, OSM named features, and the reference photos of docs/parks/refs/;
-              atlas.py rebuilds docs/parks/parks.json and checks the dossiers)
+              atlas.py rebuilds docs/parks/parks.json and checks the dossiers),
+              i18n/ (the translation kit: mkindex.mjs, names.mjs (names-xx.json from names-fr.json),
+              brief-xx.md, lineStep.mjs (the one-off pass that wrapped stacked-text steps in
+              `lineStep()` for Chinese), sheet.py (contact sheets of screenshots), gen-cjkfont.py
+              (Chinese bitmaps); cdp.mjs (a Chrome DevTools driver: `eval`, `poll`, `navigate`,
+              `reload`, `shot`), android-icon.py + apkzip.py + apkcheck.py (the Android build)
 docs/         README screenshots, plans (docs/plans/), social/ (the link previews' 1200×630 pictures —
               og.png for the site, og-invite.png for pad.html / play.html — shot in the game at
               1200×630 with the logo drawn in its font; the Pages workflow puts them at the root),
               parks/ (the national parks atlas: a dossier per park read from its official visitor
               map, parks.json, SOURCES.md — see the Parks v10 plan)
+android/      the APK: AndroidManifest.xml, java/…/MainActivity.java (a WebView on the game's own
+              files), res/ (icon + theme), build.ps1 (aapt2 → javac → d8 → apkzip → zipalign →
+              apksigner, no Gradle). See android/README.md
 ```
 
 Coordinates: 1 unit = 1 tile = 16 texels; x east, z south; the camera looks north at 45°.

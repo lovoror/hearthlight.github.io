@@ -5,7 +5,7 @@
 // the +/− buttons, « me » and « the whole world ». Tap a mark or a friend: their name.
 // The lands' names never sit on top of each other (more of them as you zoom in).
 
-import { drawText, measure } from '../engine/font.js';
+import {drawText, measure, lineStep } from '../engine/font.js';
 import { panel, UI, fitText } from '../ui/ui.js';
 import { drawMark, MARK_MAJOR } from '../party/mapmarks.js';
 import { paintVeilData, fogFromBits, FOG } from '../world/big/minimap.js';
@@ -54,7 +54,7 @@ export class PadMap {
     const hw = B.w / 2 / v.k, hh = B.h / 2 / v.k;
     v.cx = hw * 2 >= this.W ? this.X0 + this.W / 2 : Math.max(this.X0 + hw, Math.min(this.X0 + this.W - hw, v.cx));
     // (the whole world on a tall phone sits a little higher: the legend goes under it)
-    const spare = B.h - (this.R ? this.R[3] : this.H) * v.k, lh = this.d ? 38 + this.d.k.length * 12 : 0;
+    const spare = B.h - (this.R ? this.R[3] : this.H) * v.k, lh = this.d ? 38 + this.d.k.length * lineStep(12) : 0;
     v.cz = hh * 2 >= this.H ? this.Z0 + this.H / 2 + (spare > lh ? lh / 2 / v.k : 0) : Math.max(this.Z0 + hh, Math.min(this.Z0 + this.H - hh, v.cz));
     return v;
   }
@@ -201,7 +201,7 @@ export class PadMap {
     ctx.restore();
     // (the whole world on a tall phone: the legend fills the room under it)
     const free = B.y + B.h - (o.y + this.H * k);
-    if (this.legend || free > 40 + this.d.k.length * 12) this.drawLegend(ctx, B, !this.legend && free);
+    if (this.legend || free > 40 + this.d.k.length * lineStep(12)) this.drawLegend(ctx, B, !this.legend && free);
   }
 
   // the marks in view: the big ones (major) or the little ones; zoomed far out only the
@@ -299,20 +299,20 @@ export class PadMap {
     const h = this.tip.h, q = this.toScreen(B, h.wx, h.wz);
     const lines = [h.name, h.st].filter(Boolean).map((l) => fitText(l, B.w - 20));
     if (!lines.length) return;
-    const w = Math.max(...lines.map((l) => measure(l))) + 10, hh = lines.length * 10 + 5;
+    const w = Math.max(...lines.map((l) => measure(l))) + 10, hh = lines.length * lineStep(10) + 5;
     const x = Math.round(Math.max(B.x + 2, Math.min(B.x + B.w - w - 2, q.x - w / 2)));
     let y = Math.round(q.y - 9 - hh);
     if (y < B.y + 2) y = Math.round(q.y + 9);
     ctx.fillStyle = '#3b2a22'; ctx.fillRect(x - 1, y - 1, w + 2, hh + 2);
     ctx.fillStyle = '#fff8ea'; ctx.fillRect(x, y, w, hh);
-    lines.forEach((l, i) => drawText(ctx, l, x + 5, y + 3 + i * 10, { color: i ? UI.inkSoft : UI.ink }));
+    lines.forEach((l, i) => drawText(ctx, l, x + 5, y + 3 + i * lineStep(10), { color: i ? UI.inkSoft : UI.ink }));
   }
 
   // the legend, over the bottom of the map (or in the room under the whole world):
   // what each mark is and how much is done
   drawLegend(ctx, B, under = 0) {
     const keys = this.d.k, [found, total, pct] = this.d.s;
-    const pw = Math.min(B.w - 12, 190), ph = 26 + keys.length * 12;
+    const pw = Math.min(B.w - 12, 190), ph = 26 + keys.length * lineStep(12);
     const px = Math.round(B.x + (B.w - pw) / 2), py = Math.round(under ? B.y + B.h - under + Math.max(6, (under - ph) / 2) : B.y + B.h - ph - 6);
     panel(ctx, px, py, pw, ph);
     drawText(ctx, fitText(t('{n}/{total} lands · {p}% explored', { n: found, total, p: pct }), pw - 16), px + pw / 2, py + 8, { color: UI.ink, align: 'center' });

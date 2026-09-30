@@ -23,3 +23,9 @@ node_modules/
 
 # the parks data pack (tools/parks/fetch.py), rebuilt at will
 /tools/parks/cache/
+
+# android: the APK, its scratch folder and its signing key are build outputs
+/android/build/
+/android/*.apk
+/android/*.idsig
+/android/*.keystore

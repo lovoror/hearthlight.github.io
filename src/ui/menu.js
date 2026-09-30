@@ -1,7 +1,7 @@
 // The menus: the pause page (Esc · Start: resume, save, settings, controls, back to the title),
 // the Settings page, and the tabbed book (Tab · Select): Bag, Journal, Friends, Collection, Map, Hero.
 
-import { drawText, measure, wrap } from '../engine/font.js';
+import {drawText, measure, wrap, lineStep } from '../engine/font.js';
 import { LANGS, t, tn, num } from '../i18n.js';
 import { panel, button, heart, coinIcon, UI, tag, keyCap, moveKeys, fitText, splitTwo, tc, ctl, device } from './ui.js';
 import { INTERIORS } from '../world/interiors.js';
@@ -436,11 +436,11 @@ export class Menu {
     const bw = Math.max(70, measure(yes) + 12, measure(no) + 12);
     const pw = Math.min(W - 12, Math.max(210, bw * 2 + 40));
     const msg = wrap(t('Back to the title screen? Your game is saved first — you’ll pick up right here.'), pw - 20);
-    const ph = 42 + msg.length * 10;
+    const ph = 42 + msg.length * lineStep(10);
     const px = Math.round(W / 2 - pw / 2), py = Math.round(H / 2 - ph / 2);
     ctx.fillStyle = 'rgba(20,14,28,0.35)'; ctx.fillRect(0, 0, W, H);
     panel(ctx, px, py, pw, ph);
-    msg.forEach((l, i) => drawText(ctx, l, W / 2, py + 9 + i * 10, { color: UI.ink, align: 'center' }));
+    msg.forEach((l, i) => drawText(ctx, l, W / 2, py + 9 + i * lineStep(10), { color: UI.ink, align: 'center' }));
     const by = py + ph - 22, x0 = px + Math.round(pw / 2 - bw - 8), x1 = px + Math.round(pw / 2 + 8);
     button(ctx, x0, by, bw, 14, yes, { hot: C.sel === 0 });
     button(ctx, x1, by, bw, 14, no, { hot: C.sel === 1 });
@@ -484,14 +484,14 @@ export class Menu {
       const lines = wrap(d.desc ? t(d.desc) : '', pw - 70);
       // room for the description down to the footer
       const maxLines = Math.max(1, Math.floor((py + ph - 16 - (dy + 25)) / 10));
-      lines.slice(0, maxLines).forEach((l, i) => drawText(ctx, i === maxLines - 1 && lines.length > maxLines ? fitText(l + '…', pw - 70) : l, gx + 40, dy + 25 + i * 10, { color: UI.inkSoft }));
+      lines.slice(0, maxLines).forEach((l, i) => drawText(ctx, i === maxLines - 1 && lines.length > maxLines ? fitText(l + '…', pw - 70) : l, gx + 40, dy + 25 + i * lineStep(10), { color: UI.inkSoft }));
     }
   }
 
   drawQuests(ctx, px, py, pw, ph) {
     const list = this.questList();
     drawText(ctx, t('Journal'), px + 12, py + 10, { color: '#8a5234' });
-    if (!list.length) { wrap(t('No quests yet. Explore and talk to people!'), pw - 24).forEach((l, i) => drawText(ctx, l, px + 12, py + 30 + i * 10, { color: UI.inkSoft })); return; }
+    if (!list.length) { wrap(t('No quests yet. Explore and talk to people!'), pw - 24).forEach((l, i) => drawText(ctx, l, px + 12, py + 30 + i * lineStep(10), { color: UI.inkSoft })); return; }
     this.rowRects = [];
     let y = py + 26;
     const tracked = this.world.trackedQuest();
@@ -507,7 +507,7 @@ export class Menu {
       let obj = q.done ? t('Completed ✓') : q.saga ? q.obj : typeof st.obj === 'function' ? st.obj(this.world.state) : t(st.obj);
       if (Array.isArray(obj)) obj = obj.join('  ');
       const lines = wrap(obj, pw - 44);
-      const hgt = 12 + lines.length * 10;
+      const hgt = 12 + lines.length * lineStep(10);
       if (on) { ctx.fillStyle = UI.sel; ctx.fillRect(px + 8, y - 2, pw - 16, hgt); }
       const star = def.main ? '★' : '♥';
       drawText(ctx, star, px + 12, y, { color: q.done ? '#b8a080' : def.main ? '#e0a526' : '#ec5f73' });
@@ -703,7 +703,7 @@ export class Menu {
       let best = null;
       search: for (const lines of layouts) {
         for (const dy of [0, -6, 6, -11, 11]) {
-          const tw = Math.max(...lines.map((l) => measure(l))) + 4, th = lines.length * 9;
+          const tw = Math.max(...lines.map((l) => measure(l))) + 4, th = lines.length * lineStep(9);
           const cx = Math.max(mx + tw / 2, Math.min(mx + mw - tw / 2, X(x)));
           const top = Math.round(Math.max(my, Math.min(my + mh - th, Z(z) - 5 - (lines.length - 1) * 4.5 + dy)));
           const r = { x: Math.round(cx - tw / 2), y: top, w: tw, h: th, cx, lines };
@@ -714,7 +714,7 @@ export class Menu {
       placed.push(best);
       ctx.fillStyle = 'rgba(40,26,40,0.6)';
       ctx.fillRect(best.x, best.y, best.w, best.h);
-      best.lines.forEach((l, i) => drawText(ctx, l, best.cx, best.y + 1 + i * 9, { color: '#fff7e6', align: 'center' }));
+      best.lines.forEach((l, i) => drawText(ctx, l, best.cx, best.y + 1 + i * lineStep(9), { color: '#fff7e6', align: 'center' }));
     }
     // villagers
     for (const n of w.npcs) {

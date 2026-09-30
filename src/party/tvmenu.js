@@ -8,7 +8,7 @@
 // screen (the camera slides the heroes over to the left); a friend who asks
 // meanwhile is next. While it's open, that hero stands still — the others play on.
 
-import { drawText, measure, wrap } from '../engine/font.js';
+import {drawText, measure, wrap, lineStep } from '../engine/font.js';
 import { panel, UI, fitText, keyLabel, padName, isFace, faceGlyph, moveKeys, closeButton } from '../ui/ui.js';
 import { drawWorldPanel, MapView } from './worldmap.js';
 import { LOOK_GROUPS, TREASURE_HATS } from '../data/looks.js';
@@ -193,7 +193,7 @@ class TvHero extends HeroTab {
     if (img) { ctx.imageSmoothingEnabled = false; ctx.drawImage(img, A.x + 3, A.y + 3, ps, ps); }
     this.btn(ctx, 'lk:rand', A.x, A.y + ps + 12, lw, 15, t('★ Surprise me'), () => { P.setLook(p, randomLook()); P.saveProfile(p); audio.sfx('sparkle', { volume: 0.6 }); });
     const hats = (P.profileOf(p).hats || []).filter((h) => TREASURE_HATS[h]).length;
-    if (hats) wrap(tn('{n} treasure hat found on the rares', '{n} treasure hats found on the rares', hats), lw).slice(0, 3).forEach((l, i) => drawText(ctx, l, A.x, A.y + ps + 32 + i * 9, { color: '#b8862a' }));
+    if (hats) wrap(tn('{n} treasure hat found on the rares', '{n} treasure hats found on the rares', hats), lw).slice(0, 3).forEach((l, i) => drawText(ctx, l, A.x, A.y + ps + 32 + i * lineStep(9), { color: '#b8862a' }));
     // the groups, then their parts: ◂ value ▸
     const cx = A.x + lw + 10, cw = A.x + A.w - cx;
     const gw = Math.floor(cw / LOOK_GROUPS.length);
@@ -257,7 +257,7 @@ class TvHero extends HeroTab {
     list.forEach((q, i) => {
       if (i < first || y > A.y + A.h - 16) return;
       const on = i === this.qSel, lines = q.done ? [t('Completed ✓')] : wrap(q.obj || '', A.w - 16).slice(0, on ? 4 : 1);
-      const h = 11 + lines.length * 9;
+      const h = 11 + lines.length * lineStep(9);
       if (on) { ctx.fillStyle = UI.sel; ctx.fillRect(A.x - 2, y - 2, A.w + 4, h + 2); }
       drawText(ctx, q.def.main ? '★' : '♥', A.x, y, { color: q.done ? '#b8a080' : q.def.main ? '#e0a526' : '#ec5f73' });
       drawText(ctx, fitText(t(q.def.title), A.w - 12), A.x + 10, y, { color: q.done ? '#b8a080' : UI.ink });
@@ -309,7 +309,7 @@ class TvHero extends HeroTab {
       drawText(ctx, fitText(label, kx + kw - lx), lx, ky, { color: UI.ink });
     });
     const host = wrap(t('{start}: the host’s menu, for everyone (pause, zoom, skip…)', { start: p.kind === 'gamepad' ? padName('pause', p.input.style) : 'Esc' }), kw);
-    host.slice(0, 3).forEach((l, i) => drawText(ctx, l, kx, A.y + 50 + rows.length * 12 + 4 + i * 9, { color: '#b8a080' }));
+    host.slice(0, 3).forEach((l, i) => drawText(ctx, l, kx, A.y + 50 + rows.length * lineStep(12) + 4 + i * lineStep(9), { color: '#b8a080' }));
   }
 
   draw(ctx, px, py, pw, ph) {

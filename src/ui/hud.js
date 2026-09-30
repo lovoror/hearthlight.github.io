@@ -1,7 +1,7 @@
 // Heads-up display: clock & weather, coins, hotbar, quest tracker, minimap,
 // toasts, area banners and interaction prompts.
 
-import { drawText, measure, wrap } from '../engine/font.js';
+import {drawText, measure, wrap, lineStep } from '../engine/font.js';
 import { panel, keyHint, coinIcon, UI, heart, splitTwo, fitText, tc } from './ui.js';
 import { drawIcon } from '../art/icons.js';
 import { ITEMS } from '../data/items.js';
@@ -291,12 +291,12 @@ export class Hud {
       const dyn = q.step && typeof q.step.obj === 'function';
       for (const l of q.objectiveLines || [q.objective]) lines.push(...wrap(dyn ? String(l) : t(l), tw - 13));
       const title = splitTwo(t(q.title), tw - 20).map((l) => fitText(l, tw - 20));
-      const th = 20 + (title.length - 1) * 10 + lines.length * 10;
+      const th = 20 + (title.length - 1) * 10 + lines.length * lineStep(10);
       panel(ctx, W - tw - 5, ry, tw, th);
       drawText(ctx, '★', W - tw + 2, ry + 6, { color: '#f2b63d' });
-      title.forEach((l, i) => drawText(ctx, l, W - tw + 11, ry + 6 + i * 10, { color: '#8a5234' }));
+      title.forEach((l, i) => drawText(ctx, l, W - tw + 11, ry + 6 + i * lineStep(10), { color: '#8a5234' }));
       const oy = ry + 17 + (title.length - 1) * 10;
-      lines.forEach((l, i) => drawText(ctx, l, W - tw + 4, oy + i * 10, { color: UI.inkSoft }));
+      lines.forEach((l, i) => drawText(ctx, l, W - tw + 4, oy + i * lineStep(10), { color: UI.inkSoft }));
       this.hudRects.push({ x: W - tw - 5, y: ry, w: tw, h: th });
       rightBottom = ry + th;
     }
@@ -313,11 +313,11 @@ export class Hud {
       const tp = this.tipData;
       const a = Math.min(1, tp.age * 3, (tp.dur - tp.age) * 2);
       const lines = wrap(tp.text, Math.min(W - 30, 300));
-      const tw = Math.max(...lines.map((l) => measure(l))) + 14, th = lines.length * 10 + 8;
+      const tw = Math.max(...lines.map((l) => measure(l))) + 14, th = lines.length * lineStep(10) + 8;
       ctx.globalAlpha = Math.max(0, a);
       const tyTop = (g.input.touchMode ? H - 148 : H - 48) - th;
       panel(ctx, W / 2 - tw / 2, tyTop, tw, th, 'dark');
-      lines.forEach((l, i) => drawText(ctx, l, W / 2, tyTop + 5 + i * 10, { color: '#fff3c4', align: 'center' }));
+      lines.forEach((l, i) => drawText(ctx, l, W / 2, tyTop + 5 + i * lineStep(10), { color: '#fff3c4', align: 'center' }));
       ctx.globalAlpha = 1;
       // toasts stack above the tip when they would overlap it
       if (W / 2 - tw / 2 < 150) tipTop = tyTop - 4;
@@ -328,7 +328,7 @@ export class Hud {
     // ---- toasts (bottom-left, above hotbar) — on a short screen they may cover the tip, never
     // the clock at the top (nor a touch screen's stick at the bottom)
     const tLines = this.toasts.map((t) => wrap(t.text, Math.min(W - 40, 330) - (t.icon ? 26 : 12)));
-    const stack = tLines.reduce((n, l) => n + 11 + l.length * 10, 0), floor = H - (g.input.touchMode ? 96 : 44);
+    const stack = tLines.reduce((n, l) => n + 11 + l.length * lineStep(10), 0), floor = H - (g.input.touchMode ? 96 : 44);
     let ty = Math.min(floor, tipTop);
     if (ty - stack < 38) ty = Math.min(floor, 38 + stack);
     const toastBox = { x0: 5, x1: 5, y0: ty, y1: ty };
@@ -337,7 +337,7 @@ export class Hud {
       const a = t.age < 0.2 ? t.age / 0.2 : t.age > L - 0.5 ? (L - t.age) / 0.5 : 1;
       const slide = Math.round((1 - Math.min(1, t.age / 0.18)) * -30);
       const lines = tLines[i];
-      const tw = Math.max(...lines.map((l) => measure(l))) + (t.icon ? 26 : 12), th = 8 + lines.length * 10;
+      const tw = Math.max(...lines.map((l) => measure(l))) + (t.icon ? 26 : 12), th = 8 + lines.length * lineStep(10);
       ctx.globalAlpha = Math.max(0, Math.min(1, a));
       panel(ctx, 5 + slide, ty - th, tw, th);
       toastBox.x1 = Math.max(toastBox.x1, 5 + tw); toastBox.y0 = ty - th;

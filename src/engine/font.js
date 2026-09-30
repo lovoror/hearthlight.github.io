@@ -191,55 +191,108 @@ const G = {
 
 export const FONT_H = 9;       // glyph cell height incl. descenders
 export const BASELINE = 7;     // rows above baseline
-export const LINE_H = 11;
+export let LINE_H = 11;
+// Chinese needs taller lines than the 9px Latin cell: see setLineH()
+export function setLineH(v) { LINE_H = v | 0; }
 
+// Stacked text (a wrapped paragraph, a list of lines) steps by hand-picked
+// numbers tuned on the Latin font's 9 rows of ink. Chinese ink is 13 rows, so
+// in Chinese nothing may step tighter than one LINE_H: hand the step through
+// here. Every other language gets its own number back untouched, which keeps
+// their layout exactly as it was (LINE_H is 11 there).
+export function lineStep(n) { return LINE_H > 11 && n < LINE_H ? LINE_H : n; }
+
+// A glyph is { w, h, x, y, oy }: the atlas cell plus how far below the line's
+// top edge it is drawn (oy = 0 for Latin, negative for CJK, whose ink reaches
+// higher because it is rasterised at 12px instead of 9px).
 const glyphs = {};
 let atlas = null;
+let cjk = null;                 // { chars, data, w, h, oy } — see addCJK()
+let cjkSet = null;
+let built = false;
 const tinted = new Map();
+const TINT_MAX = 4;             // tinted atlas copies kept around (they are big)
+
+const PACK_W = 1024;
+
+// Register an exotic script (Chinese) rasterised offline: `chars` is a string of
+// code points, `data` one hex string of `h` rows x 3 hex digits per glyph
+// (12 texels a row, most significant bit leftmost).
+export function addCJK(chars, data, w, h, oy) {
+  cjk = { chars, data, w, h, oy };
+  cjkSet = new Set(chars);
+  glyphs_cjk_reset();
+}
+function glyphs_cjk_reset() {
+  built = false;
+  atlas = null;
+  tinted.clear();
+}
 
 function build() {
-  // Normalize rows & compute atlas layout
-  let x = 0;
+  // Normalize rows & lay the glyphs out in shelves PACK_W wide
+  const items = [];
   for (const ch of Object.keys(G)) {
     const rows = G[ch];
-    const w = Math.max(...rows.map((r) => r.length));
-    glyphs[ch] = { w, x, rows };
-    x += w + 1;
+    items.push({ ch, rows, w: Math.max(...rows.map((r) => r.length)), h: rows.length, oy: 0 });
+  }
+  if (cjk) {
+    const { chars, data, w, h, oy } = cjk;
+    const stride = h * 3;
+    for (let i = 0; i < chars.length; i++) {
+      items.push({ ch: chars[i], hex: data.substr(i * stride, stride), w, h, oy });
+    }
+  }
+  let x = 0, y = 0, shelf = 0;
+  for (const it of items) {
+    if (x + it.w > PACK_W) { x = 0; y += shelf + 1; shelf = 0; }
+    it.x = x; it.y = y; x += it.w + 1;
+    if (it.h > shelf) shelf = it.h;
   }
   atlas = document.createElement('canvas');
-  atlas.width = x;
-  atlas.height = FONT_H;
+  atlas.width = PACK_W;
+  atlas.height = Math.max(1, y + shelf);
   const ctx = atlas.getContext('2d');
   const img = ctx.createImageData(atlas.width, atlas.height);
-  for (const ch of Object.keys(glyphs)) {
-    const g = glyphs[ch];
-    g.rows.forEach((row, y) => {
-      for (let i = 0; i < row.length; i++) {
-        if (row[i] === '#') {
-          const p = (y * atlas.width + g.x + i) * 4;
-          img.data[p] = img.data[p + 1] = img.data[p + 2] = 255;
-          img.data[p + 3] = 255;
-        }
+  const D = img.data;
+  for (const it of items) {
+    const put = (gx, gy) => {
+      const p = (gy * atlas.width + gx) * 4;
+      D[p] = D[p + 1] = D[p + 2] = 255;
+      D[p + 3] = 255;
+    };
+    if (it.rows) {
+      it.rows.forEach((row, ry) => {
+        for (let i = 0; i < row.length; i++) if (row[i] === '#') put(it.x + i, it.y + ry);
+      });
+    } else {
+      for (let ry = 0; ry < it.h; ry++) {
+        const bits = parseInt(it.hex.substr(ry * 3, 3), 16);
+        if (!bits) continue;
+        for (let i = 0; i < it.w; i++) if (bits & (1 << (it.w - 1 - i))) put(it.x + i, it.y + ry);
       }
-    });
+    }
+    glyphs[it.ch] = { w: it.w, h: it.h, x: it.x, y: it.y, oy: it.oy };
   }
   ctx.putImageData(img, 0, 0);
+  built = true;
+  tinted.clear();
 }
 
 function atlasFor(color) {
-  if (!atlas) build();
-  let c = tinted.get(color);
-  if (!c) {
-    c = document.createElement('canvas');
-    c.width = atlas.width;
-    c.height = atlas.height;
-    const cx = c.getContext('2d');
-    cx.drawImage(atlas, 0, 0);
-    cx.globalCompositeOperation = 'source-in';
-    cx.fillStyle = color;
-    cx.fillRect(0, 0, c.width, c.height);
-    tinted.set(color, c);
-  }
+  if (!built) build();
+  const hit = tinted.get(color);
+  if (hit) { tinted.delete(color); tinted.set(color, hit); return hit; }
+  const c = document.createElement('canvas');
+  c.width = atlas.width;
+  c.height = atlas.height;
+  const cx = c.getContext('2d');
+  cx.drawImage(atlas, 0, 0);
+  cx.globalCompositeOperation = 'source-in';
+  cx.fillStyle = color;
+  cx.fillRect(0, 0, c.width, c.height);
+  tinted.set(color, c);
+  while (tinted.size > TINT_MAX) tinted.delete(tinted.keys().next().value);
   return c;
 }
 
@@ -247,6 +300,7 @@ const ACCENTS = /[̀-ͯ]/g;
 // (asked for every glyph drawn: characters without a glyph of their own are looked up once)
 const NORM = new Map();
 function normChar(ch) {
+  if (cjkSet && cjkSet.has(ch)) return ch;
   if (glyphs[ch] || G[ch]) return ch;
   let n = NORM.get(ch);
   if (n === undefined) { n = normSlow(ch); NORM.set(ch, n); }
@@ -335,22 +389,52 @@ function drawRun(ctx, text, x, y, color, scale, maxChars, flat) {
       count++;
       if (ch === '\n') continue;
       const g = glyphs[normChar(ch)];
-      ctx.drawImage(img, g.x, 0, g.w, FONT_H, cx, y, g.w * scale, FONT_H * scale);
+      ctx.drawImage(img, g.x, g.y, g.w, g.h, cx, y + g.oy * scale, g.w * scale, g.h * scale);
       cx += (g.w + 1) * scale;
     }
   }
+}
+
+// Punctuation that may not open a line / may not close one (Chinese typesetting)
+const CJK_NO_START = '，。、！？：；）】》」』”’…—·〉〕》';
+const CJK_NO_END = '（【《「『“‘〈〔';
+
+// Split a paragraph into unbreakable atoms: Latin words (spaces separate them),
+// and single characters for scripts written without spaces.
+function atoms(para) {
+  const out = [];
+  let word = '';
+  for (const ch of para) {
+    if (ch === ' ') { if (word) { out.push(word); word = ''; } out.push(' '); continue; }
+    if (cjkSet && cjkSet.has(ch)) { if (word) { out.push(word); word = ''; } out.push(ch); continue; }
+    word += ch;
+  }
+  if (word) out.push(word);
+  return out;
 }
 
 // Word-wrap text (tags preserved) into lines that fit maxWidth.
 export function wrap(text, maxWidth, scale = 1) {
   const out = [];
   for (const para of String(text).split('\n')) {
-    const words = para.split(' ');
+    const list = atoms(para);
     let line = '';
-    for (const word of words) {
-      const test = line ? line + ' ' + word : word;
-      if (measure(test, scale) <= maxWidth || !line) line = test;
-      else { out.push(line); line = word; }
+    for (let i = 0; i < list.length; i++) {
+      const a = list[i];
+      if (a === ' ' && !line) continue;
+      if (!line || measure(line + a, scale) <= maxWidth) { line += a; continue; }
+      // The atom does not fit. Closing punctuation hangs past the margin rather
+      // than starting the next line, and an opening bracket always travels with
+      // the character that follows it.
+      if (CJK_NO_START.includes(a)) { out.push(line + a); line = ''; continue; }
+      if (CJK_NO_END.includes(line[line.length - 1])) {
+        const br = line[line.length - 1];
+        out.push(line.slice(0, -1));
+        line = br + a;
+        continue;
+      }
+      out.push(line);
+      line = a === ' ' ? '' : a;
     }
     out.push(line);
   }

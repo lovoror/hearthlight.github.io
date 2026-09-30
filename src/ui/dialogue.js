@@ -7,7 +7,7 @@
 // twice the size (on a line of its own). Options: expr, vars, speed (×), shake
 // (the box jolts as the line opens), auto (seconds: the line moves on by itself).
 
-import { drawText, measure, wrap, stripTags, parseRich } from '../engine/font.js';
+import {drawText, measure, wrap, stripTags, parseRich, lineStep } from '../engine/font.js';
 import { COLORS } from '../art/palette.js';
 import { panel, tag, UI } from './ui.js';
 import { audio } from '../engine/audio.js';
@@ -222,7 +222,7 @@ export class Dialogue {
     // choices
     if (c.choices && done) {
       const cw = Math.max(...c.choices.map((o) => measure(o))) + 26;
-      const ch = c.choices.length * 12 + 10;
+      const ch = c.choices.length * lineStep(12) + 10;
       const cx = bx + bw - cw - 4, cy = by - ch - 4;
       panel(ctx, cx, cy, cw, ch);
       this.choiceRects = [];
@@ -273,7 +273,7 @@ export class Dialogue {
     ctx.fillRect(0, 0, W, H);
     const pw = Math.min(W - 24, 300), textW = pw - 32;
     const lines = wrap(L.text, textW);
-    const ph = Math.min(H - 24, 50 + lines.length * 12 + (L.sign ? 18 : 0));
+    const ph = Math.min(H - 24, 50 + lines.length * lineStep(12) + (L.sign ? 18 : 0));
     const px = Math.round((W - pw) / 2), py = Math.round((H - ph) / 2);
     // paper
     ctx.fillStyle = 'rgba(20,14,28,0.35)';
@@ -291,7 +291,7 @@ export class Dialogue {
       const len = stripTags(line).length;
       const n = Math.max(0, Math.min(len, remaining));
       remaining -= len;
-      if (n > 0) drawText(ctx, line, px + 16, py + 30 + i * 12, { color: '#4a3438', maxChars: n });
+      if (n > 0) drawText(ctx, line, px + 16, py + 30 + i * lineStep(12), { color: '#4a3438', maxChars: n });
     });
     if (L.sign && L.shown >= stripTags(L.text).length) drawText(ctx, L.sign, px + pw - 16, py + ph - 18, { color: '#8a5234', align: 'right' });
     // wax seal

@@ -4,7 +4,7 @@
 // switch: the game follows whichever you pick up (the prompts too). A on the
 // phone's card opens its code; on the gamepad's, a little rumble to say hello.
 
-import { drawText, measure, wrap } from '../engine/font.js';
+import {drawText, measure, wrap, lineStep } from '../engine/font.js';
 import { panel, button, UI, fitText, keyCap, moveKeys, device, padName, isFace, faceGlyph, ctl, closeButton } from './ui.js';
 import { padLabel } from '../engine/input.js';
 import { audio } from '../engine/audio.js';
@@ -77,9 +77,9 @@ export class ControlsPanel {
     panel(ctx, px, py, pw, ph);
     drawText(ctx, t('Controls'), px + pw / 2, py + 7, { color: '#8a5234', align: 'center' });
     const sub = wrap(t('Play with whichever you like: the game follows the one in your hands.'), pw - 130).slice(0, 2);   // (clear of the Close button)
-    sub.forEach((l, i) => drawText(ctx, l, px + pw / 2, py + 18 + i * 9, { color: UI.inkSoft, align: 'center' }));
+    sub.forEach((l, i) => drawText(ctx, l, px + pw / 2, py + 18 + i * lineStep(9), { color: UI.inkSoft, align: 'center' }));
     const pad = this.pad(), phone = this.game.phone;
-    const cy = py + 24 + sub.length * 9, gap = 6, cw = Math.floor((pw - 20 - gap * 2) / 3), ch = py + ph - 24 - cy;
+    const cy = py + 24 + sub.length * lineStep(9), gap = 6, cw = Math.floor((pw - 20 - gap * 2) / 3), ch = py + ph - 24 - cy;
     this.rects = [];
     CARDS.forEach((kind, i) => {
       const cx = px + 10 + i * (cw + gap), on = this.sel === i, inUse = kind === now;
@@ -111,7 +111,7 @@ export class ControlsPanel {
         const bw = cw - 12, by = cy + ch - 19;
         button(ctx, cx + 6, by, bw, 14, fitText(act, bw - 6), { hot: on, disabled: kind === 'pad' && !pad });
         this.rects.push({ x: cx + 6, y: by, w: bw, h: 14, i, go: kind === 'phone' ? 'phone' : 'rumble' });
-      } else wrap(t('Keys follow your keyboard’s layout (AZERTY and QWERTZ too).'), cw - 12).slice(0, 2).forEach((l, j) => drawText(ctx, l, cx + 6, cy + ch - 21 + j * 9, { color: '#b8a080' }));
+      } else wrap(t('Keys follow your keyboard’s layout (AZERTY and QWERTZ too).'), cw - 12).slice(0, 2).forEach((l, j) => drawText(ctx, l, cx + 6, cy + ch - 21 + j * lineStep(9), { color: '#b8a080' }));
     });
     // the way out
     const hint = now === 'pad' || now === 'phone' ? t('{a} choose · {b} close', { a: ctl('interact'), b: ctl('cancel') })

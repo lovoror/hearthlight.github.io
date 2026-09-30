@@ -5,10 +5,11 @@
 // match the English, values left in English or in French, and straight quotes that break a font.
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
-const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const arg = process.argv[2];
-if (!arg) { console.log('usage: node tools/i18n-check.mjs <file | es | de | it>'); process.exit(1); }
+if (!arg) { console.log('usage: node tools/i18n-check.mjs <file | es | de | it | zh>'); process.exit(1); }
 const files = /^[a-z]{2}$/.test(arg)
   ? fs.readdirSync(path.join(root, 'src/lang/fr')).filter((f) => f !== 'index.js').map((f) => `src/lang/${arg}/${f}`)
   : [arg];
@@ -20,7 +21,7 @@ for (const rel of files) {
   const fr = path.join(root, rel.replace(/src\/lang\/[a-z]{2}\//, 'src/lang/fr/'));
   const xx = path.join(root, rel);
   if (!fs.existsSync(xx)) { console.log(`${rel}: MISSING FILE`); bad++; continue; }
-  const F = one(await import(fr)), X = one(await import(xx + '?' + Date.now()));
+  const F = one(await import(pathToFileURL(fr).href)), X = one(await import(pathToFileURL(xx).href + '?' + Date.now()));
   const out = [];
   const cmp = (A, B, where) => {
     for (const k of Object.keys(A)) {

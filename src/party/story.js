@@ -3,7 +3,7 @@
 // mini-games, and the whole party wins the five Star Charms back together.
 
 import { THREE, toon } from '../render/r3d.js';
-import { drawText, wrap } from '../engine/font.js';
+import {drawText, wrap, lineStep } from '../engine/font.js';
 import { panel, UI, tc } from '../ui/ui.js';
 import { audio } from '../engine/audio.js';
 import { t, tn, num } from '../i18n.js';
@@ -600,14 +600,14 @@ export class PartyStory {
       // (the buttons as everyone here calls them: A on a phone, E on the keyboard…)
       const lines = [], keys = { a: P.keyName('a'), b: P.keyName('b') };
       d.rules.forEach((r, i) => wrap(t(r, keys), pw - 84).slice(0, 2).forEach((l, k) => lines.push({ text: (i ? (k ? '  ' : '• ') : '') + l, color: i ? UI.ink : '#4f73b6' })));
-      const ph = Math.max(112, 50 + lines.length * 11 + 28);
+      const ph = Math.max(112, 50 + lines.length * lineStep(11) + 28);
       const px = Math.round((W - pw) / 2), py = Math.round(H / 2 - ph / 2);
       panel(ctx, px, py, pw, ph);
       const pc = P.portraitOf(d.host, 'happy');
       if (pc) { ctx.fillStyle = '#efdfc0'; ctx.fillRect(px + 10, py + 10, 48, 48); ctx.drawImage(pc, px + 12, py + 12); }
       drawText(ctx, t(d.title), px + 66, py + 12, { color: '#8a5234', scale: 2 });
       drawText(ctx, t('hosted by {who} · {n}s', { who: t(NPCS[d.host].short), n: d.time }), px + 66, py + 32, { color: UI.inkSoft });
-      lines.forEach((l, j) => drawText(ctx, l.text, px + 66, py + 46 + j * 11, { color: l.color }));
+      lines.forEach((l, j) => drawText(ctx, l.text, px + 66, py + 46 + j * lineStep(11), { color: l.color }));
       const live = P.players.filter((p) => p.connected);
       let x = px + 12;
       for (const p of live) {

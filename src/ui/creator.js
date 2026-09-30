@@ -2,7 +2,7 @@
 // 3D model standing in Nana's cottage; options are grouped into tabs so the
 // panel always fits, with the action buttons pinned to the bottom.
 
-import { drawText, measure, wrap } from '../engine/font.js';
+import {drawText, measure, wrap, lineStep } from '../engine/font.js';
 import { panel, button, UI, keyCap, fitText, tc, ctl, device } from './ui.js';
 import { CLASSES, CLASS_ORDER, STAT_NAMES, DODGE_ICON } from '../combat/classes.js';
 import { drawClassIcon } from '../combat/icons.js';
@@ -270,8 +270,8 @@ export class Creator {
     const tx = x + 36, tw = w - 36;
     drawText(ctx, fitText(t(C.role), tw), tx, y, { color: '#8a5234' });
     const lines = wrap(t(C.desc), tw).slice(0, 3);
-    lines.forEach((l, i) => drawText(ctx, l, tx, y + 11 + i * 9, { color: UI.inkSoft }));
-    let yy = y + Math.max(34, 13 + lines.length * 9);
+    lines.forEach((l, i) => drawText(ctx, l, tx, y + 11 + i * lineStep(9), { color: UI.inkSoft }));
+    let yy = y + Math.max(34, 13 + lines.length * lineStep(9));
     // the moves: light, heavy (hold), special, dodge — with the buttons that do them
     const sp = C.special, moves = [[I.light, ctl('interact')], [I.heavy, ctl('interact') + '+'], [I.special, ctl('special')], [DODGE_ICON, ctl('dodge')]];
     if (yy + 30 <= bottom) {

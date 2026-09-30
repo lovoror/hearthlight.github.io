@@ -4,7 +4,7 @@
 import { Display } from './engine/display.js';
 import { Input } from './engine/input.js';
 import { makeCanvas } from './engine/gfx.js';
-import { drawText, measure, wrap } from './engine/font.js';
+import {drawText, measure, wrap, lineStep } from './engine/font.js';
 import { R3D } from './render/r3d.js';
 import { Lighting } from './render/lighting.js';
 import { Portraits } from './render/portrait.js';
@@ -425,7 +425,7 @@ export class Game {
       const extra = (msg.length - 1) * 10;
       const px = Math.round(W / 2 - pw / 2), py = Math.round(H / 2 - (ph + extra) / 2);
       panel(ctx, px, py, pw, ph + extra);
-      msg.forEach((l, i) => drawText(ctx, l, W / 2, py + 10 + i * 10, { color: UI.ink, align: 'center' }));
+      msg.forEach((l, i) => drawText(ctx, l, W / 2, py + 10 + i * lineStep(10), { color: UI.ink, align: 'center' }));
       const x0 = px + Math.round(pw / 2 - bw - 15), x1 = px + Math.round(pw / 2 + 15);
       button(ctx, x0, py + 30 + extra, bw, 14, yes, { hot: this.confirmSel === 0 });
       button(ctx, x1, py + 30 + extra, bw, 14, no, { hot: this.confirmSel === 1 });
@@ -618,8 +618,8 @@ export class Game {
           lines.push(t(sum.weather === 'rain' ? 'Today’s forecast: soft rain (crops watered!)' : sum.weather === 'cloudy' ? 'Today’s forecast: clouds' : 'Today’s forecast: sunshine'));
           const crops = Object.values(s.farm).length;
           if (crops) lines.push(t('Your garden grew a little overnight'));
-          lines.forEach((l, i) => drawText(ctx, fitText(l, W - 12), W / 2, H * 0.3 + 44 + i * 12, { color: '#d9c8e8', align: 'center' }));
-          drawText(ctx, t('Game saved ♥'), W / 2, H * 0.3 + 56 + lines.length * 12, { color: '#8fd6b4', align: 'center' });
+          lines.forEach((l, i) => drawText(ctx, fitText(l, W - 12), W / 2, H * 0.3 + 44 + i * lineStep(12), { color: '#d9c8e8', align: 'center' }));
+          drawText(ctx, t('Game saved ♥'), W / 2, H * 0.3 + 56 + lines.length * lineStep(12), { color: '#8fd6b4', align: 'center' });
           if (tm > 0.9 && Math.floor(tm * 2) % 2) drawText(ctx, t('press {key}', { key: ctl('interact') }), W / 2, H - 24, { color: '#8a7aa8', align: 'center' });
           ctx.globalAlpha = 1;
         },
@@ -730,7 +730,7 @@ export class Game {
             const bh = Math.max(6, (y1 - y0 - 18) * vis / items.length);
             ctx.fillStyle = '#8e5d3e'; ctx.fillRect(ax + 8, y0 + 15 + (y1 - y0 - 18 - bh) * top / (items.length - vis), 2, bh);
           }
-          if (!items.length) wrap(t('Nothing to ship. Crops, fish & forage sell here.'), pw - 24).forEach((l, i) => drawText(ctx, l, W / 2, py + 40 + i * 10, { color: UI.inkSoft, align: 'center' }));
+          if (!items.length) wrap(t('Nothing to ship. Crops, fish & forage sell here.'), pw - 24).forEach((l, i) => drawText(ctx, l, W / 2, py + 40 + i * lineStep(10), { color: UI.inkSoft, align: 'center' }));
           const dev = device();
           const how = dev === 'pad' ? t('{a} ship one · {x} ship all · {b} close', { a: ctl('interact'), x: ctl('special'), b: ctl('cancel') })
             : dev === 'touch' ? t('Tap a stack twice to ship it · tap outside to leave')

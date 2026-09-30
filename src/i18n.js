@@ -9,17 +9,27 @@
 
 // (Release v9) five languages; a dictionary is fetched the first time it's needed — loadLang()
 // before the first frame, setLang() switches once it's there (listeners hear it then)
-export const LANGS = { en: 'English', fr: 'Français', es: 'Español', de: 'Deutsch', it: 'Italiano' };
+// (Chinese v1) six: Chinese also pulls in a rasterised 7452-glyph bitmap sheet and
+// needs taller lines, because its ink is 13 rows against the Latin font's 9.
+import { setLineH } from './engine/font.js';
+export const LANGS = { en: 'English', fr: 'Français', es: 'Español', de: 'Deutsch', it: 'Italiano', zh: '简体中文' };
+const CJK = new Set(['zh']);
+const CJK_LINE_H = 14;   // 11 would make consecutive rows of hanzi collide
 const LOAD = {
   fr: () => import('./lang/fr/index.js').then((m) => [m.FR, m.FR_GROUP]),
   es: () => import('./lang/es/index.js').then((m) => [m.ES, m.ES_GROUP]),
   de: () => import('./lang/de/index.js').then((m) => [m.DE, m.DE_GROUP]),
   it: () => import('./lang/it/index.js').then((m) => [m.IT, m.IT_GROUP]),
+  zh: () => Promise.all([
+    import('./lang/zh/index.js'),
+    import('./art/cjkfont.js').then((f) => import('./engine/font.js')
+      .then((fo) => fo.addCJK(f.CJK_CHARS, f.CJK_DATA, f.CJK_W, f.CJK_H, f.CJK_OY))),
+  ]).then(([m]) => [m.ZH, m.ZH_GROUP]),
 };
 const DICTS = { en: null };
 // (World v7) lines spoken to the whole party: « vous », ustedes, ihr, voi there — tu, tú, du in solo
 const GROUP = { en: null };
-const LOCALE = { en: 'en-US', fr: 'fr-FR', es: 'es-ES', de: 'de-DE', it: 'it-IT' };
+const LOCALE = { en: 'en-US', fr: 'fr-FR', es: 'es-ES', de: 'de-DE', it: 'it-IT', zh: 'zh-CN' };
 let lang = 'en';
 let wanted = 'en';
 let audience = 'one';
@@ -51,6 +61,7 @@ export function setLang(l) {
   if (next !== 'en' && !DICTS[next]) { loadLang(next).then(() => { if (wanted === next && DICTS[next]) setLang(next); }); return; }
   if (next === lang) return;
   lang = next;
+  setLineH(CJK.has(next) ? CJK_LINE_H : 11);
   for (const f of listeners) f(lang);
 }
 export function getLang() { return lang; }

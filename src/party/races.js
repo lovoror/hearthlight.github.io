@@ -5,7 +5,7 @@
 // alone, you're up against the course's record (saved) and a target time.
 
 import { THREE, toon } from '../render/r3d.js';
-import { drawText, measure } from '../engine/font.js';
+import {drawText, measure, lineStep } from '../engine/font.js';
 import { audio } from '../engine/audio.js';
 import { drawTargetArrow } from './story.js';
 import { t } from '../i18n.js';
@@ -322,7 +322,7 @@ export class Races {
     const head = `${t(R.c.name)}  ${fmt(R.t)}`;
     const goal = solo ? t(this.best[R.c.id] ? 'record {time}' : 'target {time}', { time: fmt(this.best[R.c.id] || R.c.par) }) : '';
     const w = Math.max(measure(head) + 16, measure(goal) + 16, 120);
-    const h = 14 + rows.length * 10 + (goal ? 10 : 0);
+    const h = 14 + rows.length * lineStep(10) + (goal ? 10 : 0);
     const { x, y } = P.topCard(w, h), cx = x + w / 2;
     panel(x, y, w, h);
     drawText(ctx, head, cx, y + 3, { color: '#ffd66b', align: 'center' });

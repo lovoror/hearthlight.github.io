@@ -1,0 +1,20 @@
+// 派对模式：荒野各区的秘密（石板、风铃水晶、埋藏的黄金宝箱）。
+export const SECRETS = {
+  'A sealed golden chest! Light all three plates at once.': '封闭的黄金宝箱！一次点亮三块石板。',
+  'A sealed golden chest! Press {a} at the pedestal, then play its tune back.': '封闭的黄金宝箱！在基座上按 {a}，然后把它的小调复奏一遍。',
+  'The crystals fall silent…': '水晶安静了下来……',
+  '{name} wakes the crystals — listen!': '{name} 唤醒了水晶——快听！',
+  'Oops, not that one! Listen again…': '哎呀，不是那一颗！再听一遍……',
+  'Lovely! Now a longer tune… ({n}/{total})': '好听！现在来一段更长的……（{n}/{total}）',
+  'The seal breaks!': '封印破了！',
+  'a golden chest for the clever ones': '给聪明人的黄金宝箱',
+  '{name} dug up a golden chest!': '{name} 挖出了一个黄金宝箱！',
+  'buried treasure — one in every wild land': '埋藏的宝藏——每片荒野都有一份',
+  'Listen': '聆听',
+  'The pedestal plays a tune — then ring the crystals in its order': '基座会奏出一段小调——之后按它的顺序敲响水晶',
+  'Ring the crystals in the tune’s order': '按小调的顺序敲响水晶',
+  'A crystal that sings': '一颗会唱歌的水晶',
+  'Light all three plates at once — they stay lit a few seconds': '一次点亮三块石板——它们只会亮几秒',
+  '{name} opened a golden chest!': '{name} 打开了一个黄金宝箱！',
+  'Sealed chest': '封印的宝箱',
+};

@@ -10,9 +10,10 @@
 // modules (items, villager lines, letters, npcs, quests).
 import fs from 'node:fs';
 import path from 'node:path';
-const LANGS = { fr: ['FR', 'FR_GROUP'], es: ['ES', 'ES_GROUP'], de: ['DE', 'DE_GROUP'], it: ['IT', 'IT_GROUP'] };
+import { fileURLToPath, pathToFileURL } from 'node:url';
+const LANGS = { fr: ['FR', 'FR_GROUP'], es: ['ES', 'ES_GROUP'], de: ['DE', 'DE_GROUP'], it: ['IT', 'IT_GROUP'], zh: ['ZH', 'ZH_GROUP'] };
 
-const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
 const list = args.includes('--list');
 const only = args.find((a) => !a.startsWith('--'));
@@ -79,13 +80,13 @@ for (const [code, [dn, gn]] of Object.entries(LANGS)) {
   if (oneLang && code !== oneLang) continue;
   const file = path.join(root, `src/lang/${code}/index.js`);
   if (!fs.existsSync(file)) { console.log(`[${code}] no dictionary yet`); fails++; continue; }
-  const mod = await import(file), D = mod[dn], G = mod[gn] || {};
+  const mod = await import(pathToFileURL(file).href), D = mod[dn], G = mod[gn] || {};
   if (code === 'fr') frGroup = G;
   const miss = [...found.entries()].filter(([s]) => D[s] === undefined);
   const byFile = new Map();
   for (const [s, files] of miss) for (const f of files) byFile.set(f, (byFile.get(f) || 0) + 1);
   // (the party's plural: every line French says with « vous » needs its ustedes / ihr / voi)
-  const ref = frGroup || (await import(path.join(root, 'src/lang/fr/index.js'))).FR_GROUP;
+  const ref = frGroup || (await import(pathToFileURL(path.join(root, 'src/lang/fr/index.js')).href)).FR_GROUP;
   const gmiss = code === 'fr' ? [] : Object.keys(ref).filter((k) => G[k] === undefined);
   console.log(`[${code}] ${found.size} strings found, ${found.size - miss.length} translated, ${miss.length} missing` + (code === 'fr' ? '' : ` · party lines ${Object.keys(ref).length - gmiss.length}/${Object.keys(ref).length}`));
   for (const [f, n] of [...byFile.entries()].sort((a, b) => b[1] - a[1])) console.log(`  ${String(n).padStart(4)}  ${f}`);

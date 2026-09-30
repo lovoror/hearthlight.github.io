@@ -2,7 +2,7 @@
 // character, then play with a thumb-stick and two buttons. Everything is drawn
 // with the game's own pixel font & paper panels on an integer-scaled canvas.
 
-import { drawText, measure, wrap } from '../engine/font.js';
+import {drawText, measure, wrap, lineStep } from '../engine/font.js';
 import { panel, button, UI, fitText, splitTwo } from '../ui/ui.js';
 import { LOOK_GROUPS, TREASURE_HATS, randomLook, cleanLook } from '../data/looks.js';
 import { CLASSES, CLASS_ORDER } from '../combat/classes.js';
@@ -498,17 +498,17 @@ function drawJoin() {
     drawText(ctx, t('Where are you playing?'), px + pw / 2, py + 50, { color: '#8a5234', align: 'center' });
     choiceBtn(px + 12, py + 62, pw - 24, 30, t('At the big screen'), t('this phone is my controller'), 'jroom', join, '#4f955a');
     choiceBtn(px + 12, py + 98, pw - 24, 30, t('On my own screen'), t('from home: the game shows here'), 'jhome', goHome, '#4f73b6');
-    if (S.error) wrap(S.error, pw - 24).slice(0, 2).forEach((l, i) => drawText(ctx, l, px + pw / 2, py + 134 + i * 11, { color: '#c8454f', align: 'center' }));
+    if (S.error) wrap(S.error, pw - 24).slice(0, 2).forEach((l, i) => drawText(ctx, l, px + pw / 2, py + 134 + i * lineStep(11), { color: '#c8454f', align: 'center' }));
     hy += 40;
   } else {
     pill(px + 12, py + 52, pw - 24, 24, busy ? t('Joining…') : t('Join the party ♥'), 'join', join, { color: '#4f955a' });
     if (S.error) {
       const lines = wrap(S.error, pw - 24);
-      lines.slice(0, 2).forEach((l, i) => drawText(ctx, l, px + pw / 2, py + 86 + i * 11, { color: '#c8454f', align: 'center' }));
+      lines.slice(0, 2).forEach((l, i) => drawText(ctx, l, px + pw / 2, py + 86 + i * lineStep(11), { color: '#c8454f', align: 'center' }));
     } else drawText(ctx, window.HEARTHLIGHT && window.HEARTHLIGHT.relay ? t('Works from anywhere, over the internet') : t('Same Wi-Fi as the big screen'), px + pw / 2, py + 90, { color: UI.inkSoft, align: 'center' });
   }
   const tip = t('Scan the QR code on the big screen, or type the code it shows.');
-  if (!choose) wrap(tip, Math.min(W - 24, 220)).forEach((l, i) => drawText(ctx, l, W / 2, hy + i * 11, { color: '#b9a2e3', align: 'center' }));
+  if (!choose) wrap(tip, Math.min(W - 24, 220)).forEach((l, i) => drawText(ctx, l, W / 2, hy + i * lineStep(11), { color: '#b9a2e3', align: 'center' }));
 }
 
 function drawWaiting(text) {
@@ -726,8 +726,8 @@ function drawSolo() {
   const hp = typeof c.hp === 'number' ? c.hp : null;
   if (land) {
     const hl = hint ? wrap(hint, W - 16).slice(0, 2) : [];
-    hl.forEach((l, i) => drawText(ctx, l, W / 2, y + 2 + i * 10, { color: '#f6d38f', align: 'center' }));
-    y += Math.max(12, hl.length * 10 + 4);
+    hl.forEach((l, i) => drawText(ctx, l, W / 2, y + 2 + i * lineStep(10), { color: '#f6d38f', align: 'center' }));
+    y += Math.max(12, hl.length * lineStep(10) + 4);
     if (hp !== null) { hpBar(8, y - 2, Math.round(W * 0.3), hp); y += 6; }
   } else {
     const cardH = Math.max(54, Math.min(80, Math.round(H * 0.15)));
@@ -737,7 +737,7 @@ function drawSolo() {
     const tx = 14 + ps + 10;
     let hy = y + 11;
     if (hp !== null) { hpBar(tx, y + 11, W - tx - 18, hp); hy = y + 20; }
-    wrap(hint || t('Have fun!'), W - tx - 18).slice(0, Math.max(1, Math.floor((y + cardH - hy - 2) / 11))).forEach((l, i) => drawText(ctx, l, tx, hy + i * 11, { color: '#5a4a5a' }));
+    wrap(hint || t('Have fun!'), W - tx - 18).slice(0, Math.max(1, Math.floor((y + cardH - hy - 2) / lineStep(11)))).forEach((l, i) => drawText(ctx, l, tx, hy + i * lineStep(11), { color: '#5a4a5a' }));
     y += cardH + 6;
   }
   // (the game thinks you're stuck: the way out, first)
@@ -809,7 +809,7 @@ function drawPad() {
   if (land) {
     infoH = 16;
     const hl = hint ? wrap(hint, W - 70).slice(0, 2) : [];
-    hl.forEach((l, i) => drawText(ctx, l, W / 2, top + 2 + i * 10, { color: '#f6d38f', align: 'center' }));
+    hl.forEach((l, i) => drawText(ctx, l, W / 2, top + 2 + i * lineStep(10), { color: '#f6d38f', align: 'center' }));
     if (hl.length > 1) infoH = 26;
     if (score) drawText(ctx, score, W - 8, top + 2, { color: '#fff3c4', align: 'right' });
     if (hp !== null) { hpBar(8, top + infoH - 4, Math.round(W * 0.3), hp); infoH += 6; }
@@ -822,7 +822,7 @@ function drawPad() {
     // a little paper card: portrait, name, stars and what to do
     // (a long hint makes the card taller — up to a point — rather than being cut short)
     const base = Math.max(62, Math.min(96, Math.round(H * 0.19))), ps = base - 16, tx = 14 + ps + 10;
-    const need = (hp !== null ? 29 : 22) + 8 + wrap(hint || t('Have fun!'), W - tx - 18).length * 11 + (lobby && S.prog ? 18 : 0);
+    const need = (hp !== null ? 29 : 22) + 8 + wrap(hint || t('Have fun!'), W - tx - 18).length * lineStep(11) + (lobby && S.prog ? 18 : 0);
     const cardH = Math.max(base, Math.min(Math.round(H * 0.3), need));
     panel(ctx, 6, top + 2, W - 12, cardH);
     portraitBox(14, top + 10, ps);
@@ -833,7 +833,7 @@ function drawPad() {
     ctx.fillStyle = '#e8d6b4'; ctx.fillRect(tx, hy, W - tx - 16, 1);
     const room = lobby && S.prog ? 18 : 0;
     const lines = Math.max(1, Math.floor((top + 2 + cardH - hy - 8 - room) / 11));
-    wrap(hint || t('Have fun!'), W - tx - 18).slice(0, lines).forEach((l, i) => drawText(ctx, l, tx, hy + 5 + i * 11, { color: '#5a4a5a' }));
+    wrap(hint || t('Have fun!'), W - tx - 18).slice(0, lines).forEach((l, i) => drawText(ctx, l, tx, hy + 5 + i * lineStep(11), { color: '#5a4a5a' }));
     // between games: talents & gear right on the card
     if (room) {
       const bw = Math.floor((W - tx - 22) / 2), yy = top + cardH - 16, pts = S.prog.points || 0;
@@ -988,12 +988,12 @@ function drawInviteBody(x, y, w, h) {
     : t('Let a friend scan this screen: their phone becomes a controller.');
   const tw = land ? Math.floor(w * 0.5) - 14 : w - 14, lines = wrap(say, tw).slice(0, land ? 9 : 5);
   drawText(ctx, fitText(t('One link for everyone'), tw), x + 8, y + 5, { color: INK });
-  lines.forEach((l, i) => drawText(ctx, l, x + 8, y + 17 + i * 10, { color: '#5a4a5a' }));
+  lines.forEach((l, i) => drawText(ctx, l, x + 8, y + 17 + i * lineStep(10), { color: '#5a4a5a' }));
   const btnY = y + h - 24, codeY = btnY - 22;
   // the QR code (portrait: under the words; landscape: on the right)
   const q = S.inviteQr;
   if (q) {
-    const qx0 = land ? x + Math.floor(w * 0.5) : x, qw = land ? Math.floor(w * 0.5) : w, qTop = land ? y + 6 : y + 21 + lines.length * 10;
+    const qx0 = land ? x + Math.floor(w * 0.5) : x, qw = land ? Math.floor(w * 0.5) : w, qTop = land ? y + 6 : y + 21 + lines.length * lineStep(10);
     const room = Math.min(qw - 16, (land ? btnY - 4 : codeY - 6) - qTop), m = Math.max(1, Math.floor(room / q.width)), qs = q.width * m;
     const qx = qx0 + Math.round((qw - qs) / 2), qy = qTop + Math.max(0, Math.round(((land ? btnY - 4 : codeY - 6) - qTop - qs) / 2));
     ctx.fillStyle = '#8e5d3e'; ctx.fillRect(qx - 2, qy - 2, qs + 4, qs + 4);
@@ -1287,16 +1287,16 @@ function drawTalents() {
     drawText(ctx, t('Rank {r}/{m}', { r, m: T.max }), dx + dw, dy, { color: r ? '#4f955a' : UI.inkSoft, align: 'right' });
     const say = (k) => t(T.desc, { n: valueAt(T, k) });
     const lines = wrap(say(Math.max(1, r)), dw).slice(0, land ? 5 : 4);
-    lines.forEach((l, i) => drawText(ctx, l, dx, dy + 12 + i * 10, { color: INK }));
-    let ly = dy + 14 + lines.length * 10;
-    if (r > 0 && r < T.max && T.n) { const nx = wrap(t('Next rank: {what}', { what: say(r + 1) }), dw).slice(0, 2); nx.forEach((l, i) => drawText(ctx, l, dx, ly + i * 10, { color: '#7d4f93' })); ly += nx.length * 10 + 2; }
+    lines.forEach((l, i) => drawText(ctx, l, dx, dy + 12 + i * lineStep(10), { color: INK }));
+    let ly = dy + 14 + lines.length * lineStep(10);
+    if (r > 0 && r < T.max && T.n) { const nx = wrap(t('Next rank: {what}', { what: say(r + 1) }), dw).slice(0, 2); nx.forEach((l, i) => drawText(ctx, l, dx, ly + i * lineStep(10), { color: '#7d4f93' })); ly += nx.length * lineStep(10) + 2; }
     const why = whyNot(cls, picks, T.id, P.level);
     if (!why) pill(dx, ly, dw, 18, r ? t('Rank up') : t('Learn it'), 'talLearn', () => { send({ t: 'talent', id: T.id }); buzz([20, 30, 20]); }, { color: '#4f955a' });
-    else wrap(t(why, { n: ROW_NEED[T.row - 1] }), dw).slice(0, 2).forEach((l, i) => drawText(ctx, l, dx, ly + 4 + i * 10, { color: why === 'Fully learned!' ? '#4f955a' : UI.inkSoft }));
+    else wrap(t(why, { n: ROW_NEED[T.row - 1] }), dw).slice(0, 2).forEach((l, i) => drawText(ctx, l, dx, ly + 4 + i * lineStep(10), { color: why === 'Fully learned!' ? '#4f955a' : UI.inkSoft }));
   } else {
     drawText(ctx, fitText(t(B.name), dw), dx, dy, { color: '#8a5234' });
-    wrap(t(B.desc), dw).slice(0, 2).forEach((l, i) => drawText(ctx, l, dx, dy + 12 + i * 10, { color: INK }));
-    wrap(t('Tap a talent to see what it does'), dw).slice(0, 2).forEach((l, i) => drawText(ctx, l, dx, dy + 36 + i * 10, { color: UI.inkSoft }));
+    wrap(t(B.desc), dw).slice(0, 2).forEach((l, i) => drawText(ctx, l, dx, dy + 12 + i * lineStep(10), { color: INK }));
+    wrap(t('Tap a talent to see what it does'), dw).slice(0, 2).forEach((l, i) => drawText(ctx, l, dx, dy + 36 + i * lineStep(10), { color: UI.inkSoft }));
   }
   // reset (tap twice) & done (landscape: under the details, the tree keeps the whole height)
   if (S.talReset && S.t > S.talReset) S.talReset = 0;
@@ -1345,7 +1345,7 @@ function drawGear() {
     if (on) drawText(ctx, '✓', x + 3, y + cell - 10, { color: '#4f955a' });
     tapArea('gb' + it.id, x, y, cell, cell, () => { S.gearSel = it.id; });
   });
-  if (!G.bag.length) wrap(t('Open chests to find weapons, runes and charms'), leftW - 8).slice(0, 2).forEach((l, i) => drawText(ctx, l, px + 8, by0 + 14 + i * 10, { color: UI.inkSoft }));
+  if (!G.bag.length) wrap(t('Open chests to find weapons, runes and charms'), leftW - 8).slice(0, 2).forEach((l, i) => drawText(ctx, l, px + 8, by0 + 14 + i * lineStep(10), { color: UI.inkSoft }));
   // the selected item
   const it = find(S.gearSel);
   const dx = land ? px + leftW + 10 : px + 8, dw = land ? pw - leftW - 18 : pw - 16;
@@ -1368,7 +1368,7 @@ function drawGear() {
     if (cost) { pill(dx, y, dw, 16, t('Upgrade · {n} ★', { n: cost }), 'gUp', () => { if (P.dust >= cost) { send({ t: 'gear', op: 'upgrade', id: it.id }); buzz([20, 30, 20]); } else buzz(40); }, { color: P.dust >= cost ? '#b8862a' : '#8a7a70' }); y += 20; }
     if (S.gearDrop === it.id && S.t > S.gearDropT) S.gearDrop = null;
     pill(dx, y, dw, 16, S.gearDrop === it.id ? t('Tap again') : t('Melt · +{n} ★', { n: meltValue(it) }), 'gDrop', () => { if (S.gearDrop !== it.id) { S.gearDrop = it.id; S.gearDropT = S.t + 3; return; } S.gearDrop = null; S.gearSel = null; send({ t: 'gear', op: 'drop', id: it.id }); }, { color: S.gearDrop === it.id ? '#c8454f' : '#8a5a4a' });
-  } else wrap(t('Tap an item to see what it does'), dw).slice(0, 3).forEach((l, i) => drawText(ctx, l, dx, dy + 6 + i * 10, { color: UI.inkSoft }));
+  } else wrap(t('Tap an item to see what it does'), dw).slice(0, 3).forEach((l, i) => drawText(ctx, l, dx, dy + 6 + i * lineStep(10), { color: UI.inkSoft }));
   pill(px + 8, py + ph - 20, pw - 16, 16, t('Done'), 'gearDone', () => { S.menu = false; }, { color: '#4f955a' });
 }
 
@@ -1382,9 +1382,9 @@ function drawTame() {
   const g = S.tame, land = W > H;
   const time = S.t - g.t0;
   const lines = [g.animal, t('Win its trust!')];
-  lines.forEach((l, i) => drawText(ctx, fitText(l, W - 24), W / 2, 28 + i * 11, { color: i ? '#fff3c4' : '#f6c65b', align: 'center' }));
-  drawText(ctx, fitText(t('You offer {food}', { food: g.food }), W - 40), W / 2, 30 + lines.length * 11 + 2, { color: '#b9a2e3', align: 'center' });
-  if (g.foodId) foodPix(g.foodId, Math.round(W / 2) - 7, 30 + lines.length * 11 + 14, 2);
+  lines.forEach((l, i) => drawText(ctx, fitText(l, W - 24), W / 2, 28 + i * lineStep(11), { color: i ? '#fff3c4' : '#f6c65b', align: 'center' }));
+  drawText(ctx, fitText(t('You offer {food}', { food: g.food }), W - 40), W / 2, 30 + lines.length * lineStep(11) + 2, { color: '#b9a2e3', align: 'center' });
+  if (g.foodId) foodPix(g.foodId, Math.round(W / 2) - 7, 30 + lines.length * lineStep(11) + 14, 2);
   // the meter
   const bw = W - 40, bh = land ? 16 : 20, bx = 20, by = Math.round(H * (land ? 0.42 : 0.36));
   ctx.fillStyle = '#241a2e'; ctx.fillRect(bx - 3, by - 3, bw + 6, bh + 6);
@@ -1488,7 +1488,7 @@ function animalList(title, rows, foot, note = '') {
   const pw = cw * cols + (cols - 1) * 6 + 16;
   // (the buttons side by side — or one per row when a label wouldn't fit)
   const side = Math.floor((pw - 16 - (foot.length - 1) * 6) / foot.length), stack = foot.some(([label]) => measure(label) > side - 8);
-  const ph = 22 + per * rh + noteL.length * 10 + 28 + (stack ? (foot.length - 1) * 22 : 0);
+  const ph = 22 + per * rh + noteL.length * lineStep(10) + 28 + (stack ? (foot.length - 1) * 22 : 0);
   const px = Math.round((W - pw) / 2), py = Math.max(4, Math.round((H - ph) / 2));
   panel(ctx, px, py, pw, ph);
   drawText(ctx, title, px + pw / 2, py + 8, { color: INK, align: 'center' });
@@ -1513,7 +1513,7 @@ function animalList(title, rows, foot, note = '') {
     }
     if (r.fn) tapArea(r.id, x - 1, y - 1, cw + 2, h + 2, r.fn);
   });
-  noteL.forEach((l, i) => drawText(ctx, l, px + pw / 2, py + 23 + per * rh + i * 10, { color: UI.inkSoft, align: 'center' }));
+  noteL.forEach((l, i) => drawText(ctx, l, px + pw / 2, py + 23 + per * rh + i * lineStep(10), { color: UI.inkSoft, align: 'center' }));
   foot.forEach(([label, id, fn, color], i) => {
     if (stack) pill(px + 8, py + ph - 24 - (foot.length - 1 - i) * 22, pw - 16, 18, fitText(label, pw - 22), id, fn, { color });
     else pill(px + 8 + i * (side + 6), py + ph - 24, side, 18, fitText(label, side - 6), id, fn, { color });
@@ -1547,7 +1547,7 @@ function drawChoice() {
   const c = S.choice;
   if (!c) return drawWaiting('Waiting');
   const lines = wrap(c.title, W - 24);
-  lines.slice(0, 3).forEach((l, i) => drawText(ctx, l, W / 2, 28 + i * 11, { color: '#fff3c4', align: 'center' }));
+  lines.slice(0, 3).forEach((l, i) => drawText(ctx, l, W / 2, 28 + i * lineStep(11), { color: '#fff3c4', align: 'center' }));
   const y0 = 30 + Math.min(3, lines.length) * 11 + 6;
   const n = c.options.length;
   const land = W > H;
@@ -1593,11 +1593,11 @@ function drawMessage() {
   const m = S.message || { title: '', text: t('Look at the big screen!') };
   const pw = W - 24;
   const lines = wrap(m.text, pw - 20);
-  const ph = 28 + lines.length * 11 + (m.a ? 30 : 6);
+  const ph = 28 + lines.length * lineStep(11) + (m.a ? 30 : 6);
   const px = 12, py = Math.max(26, Math.round((H - ph) / 2) - 10);
   panel(ctx, px, py, pw, ph);
   if (m.title) drawText(ctx, m.title, W / 2, py + 9, { color: '#8a5234', align: 'center' });
-  lines.forEach((l, i) => drawText(ctx, l, px + 10, py + 22 + i * 11, { color: INK }));
+  lines.forEach((l, i) => drawText(ctx, l, px + 10, py + 22 + i * lineStep(11), { color: INK }));
   if (m.a) pill(px + 20, py + ph - 26, pw - 40, 20, m.a, 'msgA', () => { send({ t: 'b', k: 'a', v: 1 }); send({ t: 'b', k: 'a', v: 0 }); }, { color: '#4f955a' });
 }
 

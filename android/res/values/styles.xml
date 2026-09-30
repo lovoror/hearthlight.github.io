@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <!-- The night the game opens on: no title bar, no status bar, that one background. -->
+  <style name="GameTheme" parent="@android:style/Theme.Material.NoActionBar.Fullscreen">
+    <item name="android:windowBackground">#14121C</item>
+    <item name="android:colorBackground">#14121C</item>
+    <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+    <item name="android:windowContentTransitions">false</item>
+    <item name="android:statusBarColor">#14121C</item>
+    <item name="android:navigationBarColor">#14121C</item>
+  </style>
+</resources>

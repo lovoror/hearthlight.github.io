@@ -1,0 +1,50 @@
+import { ONLINE } from './online.js';
+// Chinese dictionary, assembled from its parts (keys = English source text).
+import { UI } from './ui.js';
+import { STORY } from './story.js';
+import { LINES } from './lines.js';
+import { ITEMS } from './items.js';
+import { PARTY } from './party.js';
+import { COMBAT } from './combat.js';
+import { HOST } from './host.js';
+import { WORLD } from './world.js';
+import { MOVES } from './moves.js';
+import { ARENA } from './arena.js';
+import { MOUNTS_ZH } from './mounts.js';
+import { FIGHTS } from './fights.js';
+import { PROGRESS } from './progress.js';
+import { TRAVEL } from './travel.js';
+import { SECRETS } from './secrets.js';
+import { RACES } from './races.js';
+import { EVENTS_ZH } from './events.js';
+import { SOLO } from './solo.js';
+import { ADVENTURE } from './adventure.js';
+import { TALENTS4 } from './talents4.js';
+import { WEAPONS4 } from './weapons4.js';
+import { DINOS } from './dinos.js';
+import { COMPANIONS } from './companions.js';
+import { PHONE } from './phone.js';
+import { SAGA_UI } from './saga_ui.js';
+import { CH1_ZH } from './ch1.js';
+import { WORLD7 } from './world_v7.js';
+import { CH2_ZH } from './ch2.js';
+import { CH3_ZH } from './ch3.js';
+import { CH4_ZH } from './ch4.js';
+import { CH5_ZH } from './ch5.js';
+import { CH6_ZH } from './ch6.js';
+import { CH7_ZH } from './ch7.js';
+import { CH8_ZH } from './ch8.js';
+import { CH9_ZH } from './ch9.js';
+import { CH10_ZH } from './ch10.js';
+import { WORLD13_ZH } from './world13.js';
+import { CONTROLS_ZH } from './controls.js';
+import { RELEASE9_ZH } from './release9.js';
+import { CLASSES9_ZH } from './classes9.js';
+import { MULTI10_ZH } from './multi10.js';
+
+export const ZH = { ...UI, ...ONLINE, ...ITEMS, ...LINES, ...STORY, ...PARTY, ...COMBAT, ...HOST, ...WORLD, ...MOVES, ...ARENA, ...MOUNTS_ZH, ...FIGHTS, ...PROGRESS, ...TRAVEL, ...SECRETS, ...RACES, ...EVENTS_ZH, ...SOLO, ...ADVENTURE, ...TALENTS4, ...WEAPONS4, ...DINOS, ...COMPANIONS, ...PHONE, ...SAGA_UI, ...CH1_ZH, ...WORLD7, ...CH2_ZH, ...CH3_ZH, ...CH4_ZH, ...CH5_ZH, ...CH6_ZH, ...CH7_ZH, ...CH8_ZH, ...CH9_ZH, ...CH10_ZH, ...WORLD13_ZH, ...CONTROLS_ZH, ...RELEASE9_ZH, ...CLASSES9_ZH, ...MULTI10_ZH };
+
+// lines said to the whole party (你们): looked up first in Party Mode
+export const ZH_GROUP = {};
+for (const d of [SAGA_UI, CH1_ZH, CH2_ZH, CH3_ZH, CH4_ZH, CH5_ZH, CH6_ZH, CH7_ZH, CH8_ZH, CH9_ZH, CH10_ZH, WORLD13_ZH]) if (d.__group) Object.assign(ZH_GROUP, d.__group);
+delete ZH.__group;

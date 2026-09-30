@@ -44,7 +44,7 @@ import { drawClassIcon } from '../combat/icons.js';
 import { cleanLook, randomLook } from '../data/looks.js';
 import { NPCS } from '../data/npcs.js';
 import { newState } from '../state.js';
-import { drawText, measure, wrap } from '../engine/font.js';
+import {drawText, measure, wrap, LINE_H, lineStep } from '../engine/font.js';
 import { panel, UI, emote as drawEmote, bubble, heart, fitText, ctl, closeButton, button, isFace, faceGlyph } from '../ui/ui.js';
 import { Dialogue } from '../ui/dialogue.js';
 import { audio } from '../engine/audio.js';
@@ -1787,7 +1787,7 @@ export class Party {
       const a = Math.min(1, t.t * 4, ((t.life || 3.2) - t.t) * 3);
       // (long ones — a puzzle room’s rules — wrap)
       const lines = wrap(t.text, Math.min(W * 0.55, 300));
-      const tw = Math.max(...lines.map((l) => measure(l))) + 14, th = 3 + lines.length * 10;
+      const tw = Math.max(...lines.map((l) => measure(l))) + 14, th = 3 + lines.length * lineStep(10);
       const x = Math.round(W - tw - 6);
       for (const r of avoid) if (x < r.x1 && x + tw > r.x0 && y < r.y1 && y + th > r.y0) y = r.y1 + 2;
       const ty = y;
@@ -1829,15 +1829,15 @@ export class Party {
       : local ? t('No phone? Your own menu (talents, gear…) is on this screen: Select on a gamepad, Tab on the keyboard.')
         : t('No phone? Press E or Enter on the keyboard, or A on a gamepad, to play on this screen.');
     const tips = wrap(tipText, pw - 16);
-    const tipsY = py + ph - 7 - tips.length * 10;
-    tips.forEach((l, i) => drawText(ctx, l, px + pw / 2, tipsY + i * 10, { color: padFree ? '#4f955a' : UI.inkSoft, align: 'center' }));
+    const tipsY = py + ph - 7 - tips.length * lineStep(10);
+    tips.forEach((l, i) => drawText(ctx, l, px + pw / 2, tipsY + i * lineStep(10), { color: padFree ? '#4f955a' : UI.inkSoft, align: 'center' }));
     drawText(ctx, t('Join the party!'), px + pw / 2, py + 8, { color: '#8a5234', align: 'center' });
     if (net.status === 'unavailable' || net.status === 'full') {
       // (no relay here, or the online one has no room left: the desktop app has its own)
       const why = net.status === 'full' ? t('The online party server is full right now. Try again in a few minutes — or get the desktop app: phones on your Wi-Fi join it directly.')
         : t('Phones can’t join this copy of the game: play online or in the desktop app (or start it with python3 tools/devserver.py).');
       const lines = wrap(why, pw - 20);
-      lines.forEach((l, i) => drawText(ctx, l, px + 10, py + 26 + i * 11, { color: '#a8483a' }));
+      lines.forEach((l, i) => drawText(ctx, l, px + 10, py + 26 + i * lineStep(11), { color: '#a8483a' }));
     } else if (!net.code || !this.qr) {
       drawText(ctx, net.status === 'down' ? t('Reconnecting…') : t('Opening the room…'), px + pw / 2, py + 60, { color: UI.inkSoft, align: 'center' });
     } else {
@@ -1902,9 +1902,12 @@ export class Party {
     }
     // title & status over the plaza
     const fx = pw + 16 + (W - pw - 16) / 2;
+    // Chinese ink is 13 rows against the Latin font's 9, so the gaps below the
+    // title (tuned on the Latin one) all widen by the same 3 rows. Latin: e = 0.
+    const e = LINE_H - 11;
     drawText(ctx, tr('Hearthlight Party'), fx, py, { color: '#fff3c4', align: 'center', scale: 2, outline: '#3b2a2e' });
-    drawText(ctx, tr('stories, adventures & the arena · 1 to 8 players'), fx, py + 20, { color: '#f6d38f', align: 'center', outline: '#3b2a2e' });
-    wrap(tr('♛ the first phone is the host · {key}: the menu (invitations, options…)', { key: ctl('pause') }), W - pw - 28).slice(0, 2).forEach((l, i) => drawText(ctx, l, fx, py + 32 + i * 10, { color: '#d9c8e8', align: 'center', outline: '#3b2a2e' }));
+    drawText(ctx, tr('stories, adventures & the arena · 1 to 8 players'), fx, py + 20 + e * 2, { color: '#f6d38f', align: 'center', outline: '#3b2a2e' });
+    wrap(tr('♛ the first phone is the host · {key}: the menu (invitations, options…)', { key: ctl('pause') }), W - pw - 28).slice(0, 2).forEach((l, i) => drawText(ctx, l, fx, py + 32 + e * 3 + i * (10 + e * 2), { color: '#d9c8e8', align: 'center', outline: '#3b2a2e' }));
     const here = this.players.filter((p) => p.connected);
     let msg;
     if (!here.length) msg = tr('Waiting for friends to join…');
@@ -1915,11 +1918,11 @@ export class Party {
       if (H && !k) msg = tr('Everyone’s ready! ♛ {name} starts the party', { name: H.name });
       else msg = tn('{n} friend here', '{n} friends here', here.length) + ' · ' + (k ? tn('waiting for {n} to press Ready on their phone', 'waiting for {n} to press Ready on their phones', k) : '') + (H ? (k ? ' · ' : '') + tr('♛ {name} starts the party', { name: H.name }) : '');
     }
-    // (a long line — German, Spanish… — takes two)
+    // (a long line — German, Spanish, Chinese… — takes two)
     const ml = wrap(msg, W - pw - 36).slice(0, 2);
-    const mw = Math.max(...ml.map((l) => measure(l))) + 16, mx = Math.round(fx - mw / 2), my = cy - 4 - ml.length * 11 - 2;
-    ctx.fillStyle = 'rgba(30,20,40,0.8)'; ctx.fillRect(mx, my, mw, ml.length * 11 + 2);
-    ml.forEach((l, i) => drawText(ctx, l, mx + mw / 2, my + 3 + i * 11, { color: this.countdown > 0 ? '#ffd66b' : '#fff7e6', align: 'center' }));
+    const mw = Math.max(...ml.map((l) => measure(l))) + 16, mx = Math.round(fx - mw / 2), my = cy - 4 - ml.length * LINE_H - 2;
+    ctx.fillStyle = 'rgba(30,20,40,0.8)'; ctx.fillRect(mx, my, mw, ml.length * LINE_H + 2);
+    ml.forEach((l, i) => drawText(ctx, l, mx + mw / 2, my + 3 + i * LINE_H, { color: this.countdown > 0 ? '#ffd66b' : '#fff7e6', align: 'center' }));
   }
 
   // the adventure HUD is drawn by the activity (charms, badges…); the
@@ -1943,7 +1946,7 @@ export class Party {
     const w = Math.round(Math.min(W * 0.5, Math.max(measure(o.text), measure(o.sub), Math.min(measure(o.extra), W * 0.5 - 20)) + 20));
     const lines = wrap(o.text, w - 18).slice(0, 2);
     const ex = o.extra ? wrap(o.extra, w - 18).slice(0, 2) : [];
-    const h = 9 + lines.length * 11 + (o.sub ? 11 : 0) + ex.length * 10;
+    const h = 9 + lines.length * lineStep(11) + (o.sub ? 11 : 0) + ex.length * lineStep(10);
     return { x: Math.round(6 - (1 - ease) * (w + 12)), y: 4, w, h, lines, ex };
   }
 
@@ -1963,9 +1966,9 @@ export class Party {
     if (!R) return;
     const { x, w, h, lines, ex } = R;
     panel(ctx, x, 4, w, h);
-    lines.forEach((l, i) => drawText(ctx, l, x + 8, 10 + i * 11, { color: UI.ink }));
-    if (o.sub) drawText(ctx, o.sub, x + 8, 10 + lines.length * 11, { color: '#8a5234', maxChars: 60 });
-    ex.forEach((l, i) => drawText(ctx, l, x + 8, 10 + lines.length * 11 + (o.sub ? 11 : 0) + i * 10, { color: '#7d4f93' }));
+    lines.forEach((l, i) => drawText(ctx, l, x + 8, 10 + i * lineStep(11), { color: UI.ink }));
+    if (o.sub) drawText(ctx, o.sub, x + 8, 10 + lines.length * lineStep(11), { color: '#8a5234', maxChars: 60 });
+    ex.forEach((l, i) => drawText(ctx, l, x + 8, 10 + lines.length * lineStep(11) + (o.sub ? 11 : 0) + i * lineStep(10), { color: '#7d4f93' }));
   }
 
   // everyone along the bottom: colour, name, a value (stars, level, K.O.s…)

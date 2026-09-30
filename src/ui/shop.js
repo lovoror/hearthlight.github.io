@@ -1,6 +1,6 @@
 // Shop screens: buy & sell lists, quantities, prices, owner portrait.
 
-import { drawText, measure, wrap } from '../engine/font.js';
+import {drawText, measure, wrap, lineStep } from '../engine/font.js';
 import { panel, button, coinIcon, UI, tag, fitText, ctl, device, closeButton } from './ui.js';
 import { drawIcon } from '../art/icons.js';
 import { ITEMS } from '../data/items.js';
@@ -261,7 +261,7 @@ export class Shop {
     const cur = items[this.sel];
     if (cur) {
       const lines = wrap(ITEMS[cur].desc ? t(ITEMS[cur].desc) : '', pw - 24);
-      lines.slice(0, 2).forEach((l, i) => drawText(ctx, i === 1 && lines.length > 2 ? fitText(l + '…', pw - 24) : l, px + 12, py + ph - 32 + i * 10, { color: UI.inkSoft }));
+      lines.slice(0, 2).forEach((l, i) => drawText(ctx, i === 1 && lines.length > 2 ? fitText(l + '…', pw - 24) : l, px + 12, py + ph - 32 + i * lineStep(10), { color: UI.inkSoft }));
     }
     // (how to buy and how to leave, in the words of the device in hand)
     const dev = device();

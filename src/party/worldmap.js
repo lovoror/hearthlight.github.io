@@ -3,7 +3,7 @@
 // minimap out in the wild lands). `P` is the party — or the solo game's Wild —
 // whose systems put their marks on it.
 
-import { drawText, measure } from '../engine/font.js';
+import {drawText, measure, lineStep } from '../engine/font.js';
 import { makeCanvas } from '../engine/gfx.js';
 import { ZONES, C1, C2 } from '../world/big/layout.js';
 import { collectMarks, drawMarks, drawMark } from './mapmarks.js';
@@ -154,7 +154,7 @@ export function drawWorldPanel(P, ctx, x, y, w, h, { counts = true, view = null 
   const rows = [[]];
   let rw = 0;
   for (const it of keys) { if (rw + it.w > w - 30 && rows[rows.length - 1].length) { rows.push([]); rw = 0; } rows[rows.length - 1].push(it); rw += it.w; }
-  const legendH = keys.length ? rows.length * 11 + 6 : 0;
+  const legendH = keys.length ? rows.length * lineStep(11) + 6 : 0;
   // the map: the continent you're on as big as fits — or, zoomed in (a MapView), a window on the world
   const R = mapRegion(P), RW = R.x1 - R.x0, RH = R.z1 - R.z0;
   const fit = Math.min((w - 24) / RW, (h - 20 - legendH) / RH);
