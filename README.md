@@ -34,6 +34,9 @@ single image or audio file in the game.
     anyway** (in French: *Informations complémentaires* → *Exécuter quand même*).
   - **Linux**: make the `.AppImage` executable (`chmod +x Hearthlight-*.AppImage`) and run it.
 - **Build it yourself** — follow the [local setup and build instructions](#run-it-yourself).
+- **Android** — the whole game in one ~3 MB APK, Party Mode included: see
+  [Play on Android](#play-on-android) (a single WebView around the same files, built with the
+  Android SDK's own tools — no Gradle, no Android Studio, no npm).
 - **Languages**: English, Français, Español, Deutsch, Italiano, 简体中文 — picked from your system,
   changed in Settings (the phones follow the big screen).
 
@@ -101,8 +104,8 @@ key private. See [online play and saves](docs/ONLINE.md) for controls, limitatio
   never writes an IP address into those counters (see `server/stats.mjs`). IP addresses are
   used briefly in memory for abuse prevention. Routine access logs omit IPs and URL parameters;
   server error and SSH security logs can contain IPs. See [Privacy](PRIVACY.md).
-- **Five languages**, dictionaries keyed by the English text (`src/lang/`), each with its
-  translation guide.
+- **Six languages**, dictionaries keyed by the English text (`src/lang/`), each with its
+  translation guide; Chinese has its own bitmap font, rasterised offline from Source Han Sans SC.
 - **Tested by bots**: `tools/` has bots that join through the real relay and play the whole story,
   fake gamepads, balance runs, frame-time probes and screenshot tours.
 

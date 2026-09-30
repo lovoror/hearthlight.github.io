@@ -79,6 +79,15 @@ async function main() {
     // they are safe where `eval "location.reload()"` would hang forever.
     if (cmd === 'navigate') { await cdp.send('Page.navigate', { url: rest[0] }); console.log('navigating to ' + rest[0]); return; }
     if (cmd === 'reload') { await cdp.send('Page.reload', { ignoreCache: false }); console.log('reloading ' + page.url); return; }
+    // any DevTools method, for the ones with no subcommand of their own:
+    //   send Emulation.setCPUThrottlingRate '{"rate":6}'   (a desktop box imitating a phone)
+    //   send Performance.getMetrics
+    if (cmd === 'send') {
+      const params = rest[1] ? JSON.parse(rest.slice(1).join(' ')) : {};
+      const r = await cdp.send(rest[0], params, 60000);
+      console.log(show(r && r.result !== undefined ? r.result : r));
+      return;
+    }
     if (cmd === 'eval') { console.log(show(await evaluate(cdp, rest.join(' ')))); return; }
     if (cmd === 'shot') {
       await cdp.send('Page.enable', {});
@@ -105,7 +114,7 @@ async function main() {
         await new Promise((r) => setTimeout(r, every));
       }
     }
-    console.error('usage: node tools/cdp.mjs eval <expr> | poll <expr> [timeoutMs] [everyMs] | shot <file.png> | navigate <url> | reload | tabs | url');
+    console.error('usage: node tools/cdp.mjs eval <expr> | poll <expr> [timeoutMs] [everyMs] | shot <file.png> | navigate <url> | reload | tabs | url | send <method> [jsonParams]');
     process.exitCode = 2;
   } finally {
     cdp.ws.close();
