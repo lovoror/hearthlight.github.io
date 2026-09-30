@@ -1,6 +1,6 @@
-// 大世界 v7 第七章：《黎明之陆》（src/saga/chapters/ch7.js）、灯笼宝塔
+// 大世界 v7 第七章：《黎明之地》（src/saga/chapters/ch7.js）、灯笼宝塔
 // （src/saga/dungeons/lanternpagoda.js：黎明光束，saga/beam.js）、步骤小游戏
-// （saga/games7.js）、茶壶航线（saga/teacup.js）以及黎明之陆的阴霾
+// （saga/games7.js）、茶壶航线（saga/teacup.js）以及黎明之地的阴霾
 // （src/combat/v7/dawn.js）。单人用「你」。`__group` 是对全队说的「你们」。
 // 译名：Barnacle Bess → 藤壶贝丝，Grandmother Bellows → 风箱奶奶，Old Hoshi → 老星，
 // Abbot Sen → 森方丈，Brother Bao → 包师兄，Blanche the Salt Painter → 盐画师布兰奇，
@@ -33,7 +33,7 @@ export const CH7_ZH = {
   // ---- 横渡
   'There she is! The Dauntless Teacup, on her very own mooring mast. Barnaby let me build it. He said « Forecast: regret ».': '她在那儿！无畏茶壶号，停在她专属的系泊桅杆上。巴纳比让我建的。他说：“预报：遗憾。”',
   'The Wide Sea. Nobody’s crossed it in fifty years. Fifty-one, if you count my aunt, who turned back for her hat.': '茫茫大海。五十年来没人横渡过。要是算上我姑妈，那就是五十一年——她半路折回去拿帽子了。',
-  'All aboard! Next stop: the Dawnlands. Estimated flight time: one pot of tea.': '全体上船！下一站：黎明之陆。预计飞行时间：一壶茶。',
+  'All aboard! Next stop: the Dawnlands. Estimated flight time: one pot of tea.': '全体上船！下一站：黎明之地。预计飞行时间：一壶茶。',
   'Wide Sea below. Blue in every direction. I love it. I hate it. I love it.': '下面是茫茫大海。四面八方全是蓝。我喜欢。我讨厌。我喜欢。',
   '…Hm. The needle. She runs on tea, you know. Strong. Two sugars.{p} Tea: low.': '……嗯。指针。你知道的，她靠茶跑。浓的。两块糖。{p}茶量：低。',
   'There’s an island down there that isn’t on any chart. Which is suspicious. But it has an inn. Which is not.': '下面有座岛，任何海图上都没有。这很可疑。不过岛上有家旅店。这就不可疑了。',
@@ -46,7 +46,7 @@ export const CH7_ZH = {
   'Since… the grey… fog… came… I… itch. Gloom… barnacles.{p}Right… between… the… shoulders.': '自从……灰……雾……来了……我就……痒。阴霾……藤壶。{p}就在……两个……肩……中间。',
   'Would… you… be… dears…?': '你……愿意……当……乖孩子……吗……？',
   'A whale. We parked on a WHALE.{p} …Well. She did ask nicely.': '一头鲸鱼。我们把船停在了鲸鱼身上。{p}……好吧。她确实好好问了。',
-  'The Dawnlands': '黎明之陆',
+  'The Dawnlands': '黎明之地',
   'Chapter 7': '第七章',
   'Ohhhh…{p}That’s… the… spot…': '哦哦哦……{p}就是……这……儿……',
   'Now… hold… on… to… your… teapot…': '现在……抓紧……你的……茶壶……',
@@ -67,7 +67,7 @@ export const CH7_ZH = {
   'June and I lit our first hearths the same summer. She wrote to me every Starfall. Sixty years of letters.{p}Then last spring, they stopped.': '琼和我是在同一个夏天点亮第一座炉火的。每年星落节她都给我写信。六十年的信。{p}可去年春天，信断了。',
   '…Well. She’d have liked you. She liked anyone who argues with the dark.': '……好啦。她会喜欢你的。凡是跟黑暗抬杠的人，她都喜欢。',
   'Testing, testing… is this thing on?{p}Of COURSE it’s on. It’s MINE.': '试音，试音……这东西开着吗？{p}当然开着。它是我的。',
-  'Good evening, Dawnlands! You may have noticed the dark. You’re welcome.': '晚上好，黎明之陆！你们大概注意到天黑了。不客气。',
+  'Good evening, Dawnlands! You may have noticed the dark. You’re welcome.': '晚上好，黎明之地！你们大概注意到天黑了。不客气。',
   'Tonight, a little rehearsal. My Umbral Spotlight: ONE light, on ME — and darkness for everyone else. Forever.{p}Lights… OFF!': '今晚，小小地彩排一下。我的幽影聚光灯：一束光，照着我——其他人全都待在黑暗里。永远。{p}灯……灭！',
   'Mmm. Needs more… ME. Back to rehearsals!': '嗯。还得再多一点……我。回去继续彩排！',
   'Hmph. « Rehearsal ».': '哼。“彩排”。',
@@ -88,7 +88,7 @@ export const CH7_ZH = {
   'We LOST. Out LOUD.': '我们输了。大声地。',
   'Brick liked the invisible box. Brick felt safe in the invisible box.': '砖头喜欢那个隐形箱子。砖头在隐形箱子里觉得很安全。',
   'For a moment, nobody says anything. Even Minnow.': '有那么一瞬间，谁都没说话。连小鱼也没有。',
-  'We’re not going back to the Gloomstage tonight. She’d only make us mimes AGAIN.': '今晚我们不回阴霾舞台了。她只会又把我们变成哑剧演员。',
+  'We’re not going back to the Gloomstage tonight. She’d only make us mimes AGAIN.': '今晚我们不回阴霾剧场了。她只会又把我们变成哑剧演员。',
 
   // ---- 黎明寺
   'Welcome, travellers. An old proverb says: « The door that will not open is only waiting for the right morning. »': '欢迎，旅人们。有句老话说：“不肯开的门，只是在等对的清晨。”',
@@ -124,17 +124,17 @@ export const CH7_ZH = {
   'And over the Jade Terraces, for the first time in a month, the sun comes up.': '而在翡翠梯田之上，一个月来第一次，太阳升了起来。',
   'Old Lucky! Look at him — hardly singed. We shall mend his whiskers for the festival.': '老幸运！看看他——几乎没烧着。我们会在节庆前给他补好胡须。',
   'An old proverb says: « After the longest night, breakfast. » I did not make that one up. It is on the kitchen wall.': '有句老话说：“最长的夜过后，是早饭。”这句不是我编的。它挂在厨房墙上。',
-  'Morning over the Dawnlands': '黎明之陆的清晨',
+  'Morning over the Dawnlands': '黎明之地的清晨',
   'The Murk rolls back from Emberleaf, Glowtide and Elderbough': '阴霾从余烬叶、荧光潮和长老枝退去',
 
   // ---- 灯节
   'That night, Lanternport throws the Lantern Festival it has been saving up for a month.': '那天夜里，灯笼港办起了它攒了一个月的灯节。',
   'Make a wish! You have to make a wish when yours goes up. Mine’s about fish. Don’t tell Mum.': '许个愿！你的灯升上去的时候一定要许愿。我的愿和鱼有关。别告诉我妈。',
-  'Special delivery! Thirty years of undelivered Dawnlands mail! The Murk ate the route.': '特快专递！三十年没送出去的黎明之陆信件！阴霾把邮路吃掉了。',
+  'Special delivery! Thirty years of undelivered Dawnlands mail! The Murk ate the route.': '特快专递！三十年没送出去的黎明之地信件！阴霾把邮路吃掉了。',
   'Birthday cards, mostly. A very late apology. And one for a « Miss G. Gloomsworth, Marigold Cove »…{p}Never did find her. No forwarding address.': '大多是生日贺卡。一封迟得离谱的道歉信。还有一封是给“金盏湾的 G·格鲁姆斯沃斯小姐”的……{p}一直没找着她。没有转寄地址。',
   'Ah well. Back in the sack it goes!': '算了。还是塞回邮袋里吧！',
   'At the end of the pier, three mimes sit and watch the lanterns go up. Nobody invited them. Nobody ever invites mimes.': '码头尽头，三个哑剧演员坐着看灯笼升空。没人邀请他们。从来没人邀请哑剧演员。',
-  'The Gloomstage went north-east, over Emberleaf. To Elderbough, and the Great Tree. She’ll want its heart for her finale.': '阴霾舞台往东北去了，飞过余烬叶。去长老枝，去那棵大树。她要拿它的心做她的终场。',
+  'The Gloomstage went north-east, over Emberleaf. To Elderbough, and the Great Tree. She’ll want its heart for her finale.': '阴霾剧场往东北去了，飞过余烬叶。去长老枝，去那棵大树。她要拿它的心做她的终场。',
   'Then that’s where we’re going. After the festival. After the fireworks. After breakfast.': '那我们就去那儿。等节过完。等烟花放完。等早饭吃完。',
   'June’s lantern has five flames in it now. She’d be…{p}Hmph. Smoke in my eye. Go and dance, the lot of you.': '琼的灯笼里现在有五簇火苗了。她一定会……{p}哼。烟熏着我眼睛了。你们全都去跳舞吧。',
   'The Lantern Festival': '灯节',
@@ -251,7 +251,7 @@ export const CH7_ZH = {
   'Tea: full. Passengers: accounted for. Landing: mostly gentle.': '茶量：满。乘客：一个不少。降落：大体温和。',
   'The Dauntless Teacup: fly across the Wide Sea': '无畏茶壶号：飞越茫茫大海',
 
-  // ---- 黎明之陆的阴霾（combat/v7/dawn.js）
+  // ---- 黎明之地的阴霾（combat/v7/dawn.js）
   'Murk Moth': '阴霾蛾',
   'Ink Imp': '墨汁小魔',
   'Sour Lantern': '酸脸灯笼',

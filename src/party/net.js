@@ -3,6 +3,54 @@
 // it as pads.
 
 const CFG = (typeof window !== 'undefined' && window.HEARTHLIGHT) || {};
+
+// Settings · Party server. One address, typed by hand at any time — no build step and
+// no config.js: the relay and the page the phones open both come out of it.
+//   '192.168.1.20:8765'          a LAN machine running tools/devserver.py
+//   'ws://192.168.1.20:8765/ws'  the same, spelled out (any host or path)
+//   'https://party.example'      a relay of your own, TLS and all
+let SERVER = '';
+export function setServer(addr) { SERVER = (addr || '').trim(); }
+export function getServer() { return SERVER; }
+
+// The address this machine answers at on the local network, which is what the phones should open.
+// The local server knows it (`/__lan`, best interface first); anywhere else — the deployed site,
+// the APK — there is nothing to ask and it stays empty.
+let LAN = '';
+export function lanAddress() { return LAN; }
+export async function detectLan() {
+  if (LAN) return LAN;
+  try {
+    const r = await fetch('/__lan', { cache: 'no-store' });
+    if (!r.ok) return '';
+    const j = await r.json();
+    const ip = (j.ips || [])[0];
+    if (ip) LAN = `${ip}${j.port && String(j.port) !== '80' ? ':' + j.port : ''}`;
+  } catch (e) { /* no local server to ask */ }
+  return LAN;
+}
+
+// what Settings · Party server shows (and starts from) when nothing was typed by hand
+export function defaultServer() { return SERVER || LAN; }
+
+export function serverParts(addr = SERVER) {
+  const a = (addr || '').trim().replace(/\/+$/, '');
+  if (!a) return null;
+  try {
+    if (/^wss?:\/\//i.test(a)) {
+      const u = new URL(a);
+      const path = /^\/ws$/i.test(u.pathname) ? '/ws' : u.pathname;
+      return { relay: `${u.protocol}//${u.host}${path}`, pad: `http${u.protocol === 'wss:' ? 's' : ''}://${u.host}/pad.html` };
+    }
+    if (/^https?:\/\//i.test(a)) {
+      const u = new URL(a);
+      return { relay: `${u.protocol === 'https:' ? 'wss' : 'ws'}://${u.host}/ws`, pad: `${u.protocol}//${u.host}/pad.html` };
+    }
+    // (a bare LAN host: the dev server speaks plain ws and http)
+    return { relay: `ws://${a}/ws`, pad: `http://${a}/pad.html` };
+  } catch (e) { return null; }
+}
+
 // the relay's address (`query`: role, code, id)
 export function relayUrl(query, override) {
   const base = override || CFG.relay || `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`;
@@ -22,7 +70,9 @@ export class PartyNet {
   }
 
   async start({ online = false } = {}) {
-    this.override = online ? CFG.onlineRelay || CFG.relay : null;
+    // (an address typed in Settings beats both the local dev server and the online relay)
+    const parts = serverParts();
+    this.override = parts ? parts.relay : online ? CFG.onlineRelay || CFG.relay : null;
     this.stopped = false;
     // (online: the relay is elsewhere and the phones open the public phone page)
     this.remote = !!(this.override || CFG.relay);
@@ -113,6 +163,8 @@ export class PartyNet {
   // the address phones should open (LAN IP, never "localhost"; online, the public phone page)
   get joinUrl() {
     if (!this.code) return '';
+    const parts = serverParts();
+    if (parts) return `${parts.pad}#${this.code}`;
     if (this.override && CFG.onlinePad) return `${CFG.onlinePad}#${this.code}`;
     if (CFG.pad) return `${CFG.pad}#${this.code}`;
     if (this.remote) return `${location.origin}${location.pathname.replace(/[^/]*$/, '')}pad.html#${this.code}`;

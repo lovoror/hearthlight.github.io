@@ -202,6 +202,17 @@ export function setLineH(v) { LINE_H = v | 0; }
 // their layout exactly as it was (LINE_H is 11 there).
 export function lineStep(n) { return LINE_H > 11 && n < LINE_H ? LINE_H : n; }
 
+// Where a run's ink actually lands, relative to the y handed to drawText:
+// Latin ink starts at the y itself and is FONT_H tall; Chinese ink starts
+// -oy*scale rows higher (its baseline is matched to Latin's, so it grows
+// upwards) and is h*scale tall. Panels that place text by hand — a banner over
+// a sub-line, a card with three stacked lines — measure with this instead of
+// guessing, or Chinese creeps into whatever sits above it.
+export function inkBox(scale = 1) {
+  const o = cjk ? cjk.oy : 0, h = cjk ? cjk.h : FONT_H;
+  return { top: o * scale, h: h * scale };
+}
+
 // A glyph is { w, h, x, y, oy }: the atlas cell plus how far below the line's
 // top edge it is drawn (oy = 0 for Latin, negative for CJK, whose ink reaches
 // higher because it is rasterised at 12px instead of 9px).

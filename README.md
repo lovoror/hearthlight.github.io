@@ -92,7 +92,10 @@ key private. See [online play and saves](docs/ONLINE.md) for controls, limitatio
   (`server/relay.mjs`, Node + `ws`) that passes controller messages — a controller-only party of eight is
   ~500 messages a second, 0.3 Mbit/s. The online relay allows up to 150 controller rooms. Remote video has separate bandwidth limits; this is not a promise of 150 streamed games.
 - **The desktop app** (`desktop/`, Electron) has the relay built in: phones on the same Wi-Fi join
-  directly, no internet needed.
+  directly, no internet needed. The same goes for the dev server (`tools/devserver.py`) and
+  anything else hosting the game: **Settings · Party server** takes one address (the machine's own
+  LAN address is filled in for you when it can be) and the party — the relay and the page the
+  phones scan — runs from there.
 - **Hosting**: the web version on GitHub Pages, the relay on a small VPS (nginx, systemd).
   The relay keeps anonymous counters — visits, parties, players, their country and language — and
   never writes an IP address into those counters (see `server/stats.mjs`). IP addresses are

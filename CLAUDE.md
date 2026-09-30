@@ -55,10 +55,26 @@ python3 tools/devserver.py 8765        # static files + /__shot + /__lan + /ws p
   python tools/devserver.py 8777` plays it in a browser (a plain `python -m http.server` serves
   `.mjs` as `text/plain`, which the browser refuses: use devserver). The WebView's origin must be
   one `server/relay.mjs`'s `ORIGINS` accepts, so `MainActivity.HOST` is the VPS host and any path
-  not in `assets/` (the relay's `/ws`, `/saves/*`) falls through to the real network.
+  not in `assets/` (the relay's `/ws`, `/saves/*`) falls through to the real network. A party on
+  the local network is plain `ws://`, so the WebView also needs `MIXED_CONTENT_ALWAYS_ALLOW`.
+- Parties run on whatever server is set in **Settings · Party server** (one address — the relay and
+  the page the phones open both come out of it, `src/party/net.js`'s `serverParts()`): an empty one
+  means "the page's own host, then `config.js`". A LAN party is `tools/devserver.py` on the host plus
+  `192.168.1.20:8765` here; nothing needs rebuilding (a gamepad types it on the game's own keyboard
+  `ADDR_ROWS`, a keyboard types it straight into the row through `input.textHandler`, a phone gets
+  `window.prompt`). `android/build.ps1 -Relay/-Pad` only preconfigure an APK.
+  The row's default is the machine's own LAN address, asked of the local server's `/__lan`
+  (`detectLan()` / `defaultServer()` in `src/party/net.js`, called at boot from `src/game.js`), so
+  the host that runs the party shows `192.168.1.20:8765` without anyone typing it; the address is
+  shown as-is, never through `t()`.
+- Settings · **Performance stats** draws fps, the frame's ms (and its peak), triangles, draw calls,
+  meshes, textures and shaders in the top-left; `?debug=1` / `?stats=1` forces it on for a test run.
 - Driving a headless Chrome: `node tools/cdp.mjs eval|poll|navigate|reload|shot` (a zero-dep
-  DevTools client; reload with `navigate`/`reload`, never `eval "location.reload()"`, whose reply
-  dies with the page's context and hangs the driver). Keep `--user-data-dir` outside the repo.
+  DevTools client; reload with `navigate`, never `eval "location.reload()"`, whose reply dies with
+  the page's context and hangs the driver — and prefer `navigate` over the `reload` subcommand,
+  whose reloaded page has hung the driver here). Keep `--user-data-dir` outside the repo, and use
+  `tools/chrome.ps1 start|stop` rather than `Get-Process chrome | Stop-Process`: that kills the
+  user's browser too. It renders the world on the CPU at 60 fps, so stop it when you're done.
 
 ### Known pitfalls
 

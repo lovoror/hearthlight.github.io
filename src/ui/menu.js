@@ -2,6 +2,7 @@
 // the Settings page, and the tabbed book (Tab · Select): Bag, Journal, Friends, Collection, Map, Hero.
 
 import {drawText, measure, wrap, lineStep } from '../engine/font.js';
+import { defaultServer } from '../party/net.js';
 import { LANGS, t, tn, num } from '../i18n.js';
 import { panel, button, heart, coinIcon, UI, tag, keyCap, moveKeys, fitText, splitTwo, tc, ctl, device } from './ui.js';
 import { INTERIORS } from '../world/interiors.js';
@@ -17,6 +18,7 @@ import { SPECIES, SPECIES_ORDER } from '../systems/critters.js';
 import { audio } from '../engine/audio.js';
 import { dayLabel, timeLabel, HUD_MODES, HUD_NAMES } from './hud.js';
 import { drawWorldPanel, MapView } from '../party/worldmap.js';
+import { Osk, ADDR_ROWS } from './osk.js';
 import { HeroTab } from '../solo/herotab.js';
 import { DIFFS } from '../party/host.js';
 
@@ -44,6 +46,9 @@ export class Menu {
     this.from = null;             // (Settings opened from the pause page goes back to it)
     this.confirm = null;          // the pause page's « back to the title? »
     this.lastTab = 'bag';         // Tab / Select open the book where you left it
+    this.osk = null;              // (Settings · Party server: the address, typed by hand)
+    this.dt = 0;
+    this.serverKey = (e) => this.typeServer(e);
   }
 
   show(tab = 'bag') {
@@ -68,6 +73,7 @@ export class Menu {
   }
 
   close() {
+    if (this.world.input && this.world.input.textHandler === this.serverKey) this.world.input.textHandler = null;
     if (!this.page) this.lastTab = TABS[this.tab][0];
     this.open = false;
     this.page = null; this.confirm = null;
@@ -80,6 +86,7 @@ export class Menu {
 
   update(dt, input) {
     this.t += dt;
+    this.dt = dt;
     const w = this.world, s = w.state;
     if (this.page === 'pause') { this.updatePause(input); return; }
     if (this.page === 'settings') { this.updateSettingsPage(input); return; }
@@ -177,10 +184,51 @@ export class Menu {
   }
 
   // the Settings page: back to the pause page it came from (Start on a gamepad resumes)
+  // the party server's address, typed on a real keyboard as it is typed (Settings)
+  typeServer(e) {
+    const st = this.world.settings, v = st.server || '';
+    let n = v;
+    if (e.key === 'Backspace') n = v.slice(0, -1);
+    else if (e.key === 'Enter' || e.key === 'Escape') {
+      this.world.input.textHandler = null;
+      audio.sfx('confirm', { volume: 0.5 });
+      return true;
+    } else if (e.key.length === 1 && /[\p{L}\p{N} .:/\-’]/u.test(e.key) && v.length < 40) n = v + e.key;
+    else return false;
+    st.server = n;
+    saveSettings(st);
+    this.world.game.applySettings();
+    audio.sfx('typewriter', { volume: 0.4 });
+    return true;
+  }
+
   updateSettingsPage(input) {
+    // (the address keyboard owns the buttons while it's up)
+    if (this.osk) {
+      input.textHandler = null;
+      this.osk.update(this.dt, input);
+      if (this.osk.done || this.osk.back) {
+        if (this.osk.done) {
+          const st = this.world.settings;
+          st.server = this.osk.v.trim();
+          saveSettings(st);
+          this.world.game.applySettings();
+          audio.sfx('confirm');
+        } else audio.sfx('cancel', { volume: 0.5 });
+        this.osk = null;
+        input.consume();
+      }
+      return;
+    }
+    // (the party server's row takes the keys as they are typed, on a real keyboard)
+    const row = this.settingsRows()[this.sel] || [];
+    const typing = row[2] === 'server' && !this.world.input.touchMode && device() !== 'pad' && device() !== 'phone';
+    if (typing) input.textHandler = this.serverKey;
+    else if (input.textHandler === this.serverKey) input.textHandler = null;
     const back = input.pressed('cancel') || input.pressed('menu'), start = input.pressed('pause') && !input.pressed('cancel');
     if (back || start || (this.closeRect && input.mouse.pressed && input.mouseIn(this.closeRect.x, this.closeRect.y, this.closeRect.w, this.closeRect.h))) {
-      if (this.from === 'pause' && !start) { this.page = 'pause'; this.from = null; this.sel = this.pauseRows().findIndex((r) => r[1] === 'settings'); audio.sfx('page'); input.consume(); return; }
+      if (this.from === 'pause' && !start) { this.page = 'pause'; this.from = null; this.sel = this.pauseRows().findIndex((r) => r[1] === 'settings'); if (input.textHandler === this.serverKey) input.textHandler = null; audio.sfx('page'); input.consume(); return; }
+      if (input.textHandler === this.serverKey) input.textHandler = null;
       this.close();
       return;
     }
@@ -250,9 +298,11 @@ export class Menu {
       ['Day length', { 0.5: 'Relaxed (2×)', 1: 'Normal', 1.5: 'Brisk', 2: 'Quick' }[st.daySpeed] || 'Normal', 'daySpeed'],
       ['Text speed', { 0.6: 'Slow', 1: 'Normal', 1.8: 'Fast' }[st.textSpeed] || 'Normal', 'textSpeed'],
       ['Display', HUD_NAMES[w.hud.mode()], 'hud'],
+      ['Performance stats', st.stats ? 'On' : 'Off', 'stats'],
       ['Adventure difficulty', (DIFFS[st.adventure] || DIFFS.normal).name, 'adventure'],
       ['Controls', { pad: 'Gamepad', phone: 'Phone', touch: 'Touch screen' }[device()] || 'Keyboard', 'controls'],
       ['Play with your phone', this.world.game.phone.connected ? 'Connected' : this.world.game.phone.net ? 'Waiting' : 'Not connected', 'phone'],
+      ['Party server', st.server || defaultServer() || 'Default', 'server'],
       ['Gamepad rumble', st.rumble === false ? 'Off' : 'On', 'rumble'],
       ['Pixel size', st.zoom < 0 ? 'Smaller' : st.zoom > 0 ? 'Bigger' : 'Auto', 'zoom'],
       ['Language', LANGS[st.lang] || 'English', 'lang'],
@@ -283,6 +333,28 @@ export class Menu {
     else if (key === 'phone') { if (activate || dir) w.game.phone.openPanel(); return; }
     else if (key === 'controls') { if (activate || dir) w.game.openControls(); return; }
     else if (key === 'rumble') { st.rumble = st.rumble === false; if (st.rumble) w.input.rumble(0.6, 0.4, 160); }
+    else if (key === 'stats') st.stats = !st.stats;
+    else if (key === 'server') {
+      // (the address is typed: the row starts from what this machine answers at, so the box
+      //  opens with the LAN address already in it and an empty one falls back to config.js)
+      if (activate || dir) {
+        const cur = st.server || defaultServer() || '';
+        if (w.input.touchMode) {
+          // no keyboard on a phone: the system prompt, as the character creator does
+          const v = window.prompt(t('Type the address of the server that runs the party'), cur);
+          if (v !== null) { st.server = v.trim().slice(0, 40); saveSettings(st); w.game.applySettings(); }
+        } else if (device() === 'pad' || device() === 'phone') {
+          // a gamepad: the letters on the screen, with a number row for the address
+          this.osk = new Osk(cur, {
+            max: 40, title: 'Party server', rows: ADDR_ROWS, allowEmpty: true,
+            hint: t('Type the address of the server that runs the party'),
+          });
+        }
+        // (on a real keyboard there's nothing to open: the typing goes straight into the row)
+        audio.sfx('page');
+      }
+      return;
+    }
     else if (key === 'zoom') { st.zoom = cycle([-1, 0, 1], Math.max(-1, Math.min(1, st.zoom || 0))); w.game.applyZoom(); }
     else if (key === 'lang') st.lang = cycle(Object.keys(LANGS), st.lang);
     else if (key === 'unstuck' && activate) { this.close(); w.unstick(); return; }
@@ -320,6 +392,7 @@ export class Menu {
       this.drawClose(ctx, px + pw - 14, py - 12);
       this.rowRects = null;
       this.drawSettings(ctx, px, py, pw, ph, true);
+      if (this.osk) this.osk.draw(ctx, W, H);
       const back = this.from === 'pause' ? t('{b} back', { b: ctl('cancel') }) : t('{b} close', { b: ctl('cancel') });
       if (!w.input.touchMode) drawText(ctx, back, px + pw - 8, py + ph - 12, { color: '#b8a080', align: 'right' });
       return;
@@ -383,7 +456,9 @@ export class Menu {
     const w = this.world, s = w.state, W = w.display.w, H = w.display.h, G = w.game;
     ctx.fillStyle = 'rgba(20,14,28,0.55)';
     ctx.fillRect(0, 0, W, H);
-    const rh = w.input.touchMode ? 20 : 16, cardH = 46, footH = w.input.touchMode ? 4 : 16;    // (a finger: taller rows)
+    // the card holds three stacked lines, so it grows by exactly what those
+    // lines grew by (Chinese ink is taller: font.js lineStep)
+    const rh = w.input.touchMode ? 20 : 16, cardH = 46 + (lineStep(10) - 10) + (lineStep(11) - 11), footH = w.input.touchMode ? 4 : 16;    // (a finger: taller rows)
     const PAUSE = this.pauseRows();
     const pw = Math.min(W - 16, 250), ph = Math.min(H - 20, cardH + 8 + PAUSE.length * rh + footH);
     const px = Math.round((W - pw) / 2), py = Math.round((H - ph) / 2) + 4;
@@ -403,12 +478,12 @@ export class Menu {
     const f = w.wild && w.wild.me.fighter, cls = w.wild && CLASSES[w.wild.me.cls];
     const who = cls ? t('{name} · {cls}, level {n}', { name: s.player.name, cls: t(cls.name), n: f ? f.level : (w.wild.profileOf().level || 1) }) : s.player.name;
     drawText(ctx, fitText(who, tw2), tx, cy, { color: UI.ink });
-    drawText(ctx, fitText([dayLabel(s.day), timeLabel(s.hour), this.placeNow()].filter(Boolean).join(' · '), tw2), tx, cy + 10, { color: UI.inkSoft });
+    drawText(ctx, fitText([dayLabel(s.day), timeLabel(s.hour), this.placeNow()].filter(Boolean).join(' · '), tw2), tx, cy + lineStep(10), { color: UI.inkSoft });
     const q = w.trackedQuest();
     if (q) {
       const obj = q.step && typeof q.step.obj === 'function' ? String(q.objective) : t(q.objective);
-      drawText(ctx, '★', tx, cy + 21, { color: '#e0a526' });
-      drawText(ctx, fitText(t(q.title) + ' — ' + obj, tw2 - 10), tx + 9, cy + 21, { color: '#8a5234' });
+      drawText(ctx, '★', tx, cy + lineStep(10) + lineStep(11), { color: '#e0a526' });
+      drawText(ctx, fitText(t(q.title) + ' — ' + obj, tw2 - 10), tx + 9, cy + lineStep(10) + lineStep(11), { color: '#8a5234' });
     }
     ctx.fillStyle = '#e0cba4'; ctx.fillRect(px + 8, py + cardH - 2, pw - 16, 1);
     // the choices
@@ -768,10 +843,16 @@ export class Menu {
     if (!bare) drawText(ctx, t('Settings'), px + 12, py + 10, { color: '#8a5234' });
     const rows = this.settingsRows(), top = py + (bare ? 12 : 26);
     this.rowRects = []; this.sliderRects = [];
-    // (rows squeeze a little when there are many)
-    const rh = Math.max(12, Math.min(17, Math.floor((ph - (bare ? 32 : 46)) / rows.length)));
-    rows.forEach(([label, val, key], i) => {
-      const y = top + i * rh;
+    // (rows squeeze a little when there are many — but Chinese glyphs are taller than Latin ones,
+    //  so lineStep keeps a row from touching the next; whatever no longer fits scrolls with the
+    //  cursor instead of piling up)
+    const rowsH = ph - (bare ? 32 : 46);
+    const rh = lineStep(Math.max(12, Math.min(17, Math.floor(rowsH / rows.length))));
+    const show = Math.max(1, Math.floor(rowsH / rh));
+    const first = Math.max(0, Math.min(this.sel - Math.floor(show / 2), rows.length - show));
+    rows.slice(first, first + show).forEach(([label, val, key], k) => {
+      const i = first + k;
+      const y = top + k * rh;
       const on = i === this.sel;
       if (on) { ctx.fillStyle = UI.sel; ctx.fillRect(px + 8, y - 3, pw - 16, rh - 2); }
       drawText(ctx, t(label), px + 16, y + 1, { color: UI.ink });
@@ -788,13 +869,14 @@ export class Menu {
           drawText(ctx, val, px + pw - 16, y + 1, { color: UI.inkSoft, align: 'right' });
           this.sliderRects.push({ key, i, x: bx, y: y - 3, w: bw, h: rh - 2 });
         } else {
-          // language names are always written in their own language
-          const shown = key === 'lang' ? val : t(val);
+          // language names are always written in their own language, a server address is not a word
+          const shown = key === 'lang' || key === 'server' ? val : t(val);
           drawText(ctx, (on ? '← ' : '') + shown + (on ? ' →' : ''), px + pw - 16, y + 1, { color: UI.inkSoft, align: 'right' });
         }
       }
       this.rowRects.push({ x: px + 8, y: y - 3, w: pw - 16, h: rh - 2, i });
     });
+    if (rows.length > show) drawText(ctx, `${first + 1}-${Math.min(first + show, rows.length)}/${rows.length}`, px + pw - 12, py + 10, { color: UI.inkSoft, align: 'right' });
     const help = (device() === 'pad' ? [
       t('Controls: the stick moves (push it far to run) · {a} use · {b} jump · {prev}/{next} hotbar', { a: ctl('interact'), b: ctl('jump'), prev: ctl('hotPrev'), next: ctl('hotNext') }),
       t('{start} pause · {select} bag, journal & map · {x} special · {y} dodge', { start: ctl('pause'), select: ctl('menu'), x: ctl('special'), y: ctl('dodge') }),

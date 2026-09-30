@@ -22,6 +22,7 @@ import { drawIcon } from './art/icons.js';
 import { OX, OZ } from './world/overworld.js';
 import { applyHomeLevel } from './world/interiors.js';
 import { Party } from './party/party.js';
+import { setServer, detectLan } from './party/net.js';
 import { SavesDialog } from './party/hub.js';
 import { partySummary } from './party/saves.mjs';
 import { SessionRecovery } from './session.mjs';
@@ -31,6 +32,11 @@ import { ControlsPanel } from './ui/controls.js';
 import { CLASSES } from './combat/classes.js';
 
 const MUTE = typeof location !== 'undefined' && /[?&]mute=1\b/.test(location.search);
+// (Settings · Performance stats draws the frame's vital signs in the top-left — fps,
+// triangles, draw calls, meshes, textures, shaders. A projector and a laptop are two
+// very different budgets, so it's worth being able to see which one the frame is
+// spending. ?debug=1 / ?stats=1 still forces it on for a test run.)
+const SHOW_STATS = typeof location !== 'undefined' && /[?&](debug|stats)=1\b/.test(location.search);
 
 export class Game {
   constructor() {
@@ -50,6 +56,7 @@ export class Game {
     this.phone = new SoloPhone(this);       // a phone as the solo game's controller (Settings)
     this.controls = new ControlsPanel(this); // keyboard · gamepad · phone, side by side (the title, Settings)
     this.debug = this.makeDebug();
+    this.stats = { on: SHOW_STATS || !!this.settings.stats, fps: 0, ms: 0, peak: 0, acc: 0, n: 0 };
     this.input.onFirstGesture = () => { audio.unlock(); this.applySettings(); };
     this.input.onGesture = () => audio.unlock();
   }
@@ -86,13 +93,18 @@ export class Game {
     this.dialogue.game = this.world;
     console.log('world built in', Math.round(performance.now() - t0), 'ms');
     this.applySettings();
+    // (ask the local server what this machine answers at on the LAN: Settings · Party server
+    //  shows that address as its default instead of an empty box that says "Default")
+    detectLan().then((a) => { if (a) this.applySettings(); });
     this.toTitle();
     if (reload?.mode === 'game' && hasSave()) this.continueGame();
     else if (reload?.mode === 'party') this.toParty({ online: reload.online, resume: !!reload.activity, reload });
     let last = performance.now();
     const loop = (ts) => {
-      const dt = Math.max(0, Math.min(0.05, (ts - last) / 1000));
+      const raw = (ts - last) / 1000;
+      const dt = Math.max(0, Math.min(0.05, raw));
       last = ts;
+      this.statsTick(raw);
       if (!this.paused) this.frame(dt);
       requestAnimationFrame(loop);
     };
@@ -110,6 +122,20 @@ export class Game {
     const p = this.party;
     return { mode: 'party', online: !!p.options.online, activity: p.phase === 'lobby' ? null : p.actKind,
       locals: p.players.filter((q) => q.connected && q.kind !== 'phone').map((q) => ({ kind: q.kind, layout: q.input.layoutId, index: q.input.index })) };
+  }
+
+  // a quarter-second window of real frame times, smoothed, for the stats overlay
+  statsTick(dt) {
+    const s = this.stats;
+    if (!s.on || !(dt > 0)) return;
+    s.acc += dt; s.n++;
+    s.peak = Math.max(s.peak, dt * 1000);
+    if (s.acc >= 0.25) {
+      const fps = s.n / s.acc, ms = (s.acc / s.n) * 1000;
+      s.fps = s.fps ? s.fps * 0.6 + fps * 0.4 : fps;
+      s.ms = s.ms ? s.ms * 0.6 + ms * 0.4 : ms;
+      s.acc = 0; s.n = 0; s.peak = 0;
+    }
   }
 
   frame(dt) {
@@ -147,6 +173,7 @@ export class Game {
     if (this.controls.open) this.controls.draw(this.display.ctx);
     if (this.phone.panelOpen) this.phone.drawPanel(this.display.ctx);
     this.drawPadNote(this.display.ctx);
+    if (this.stats.on) this.drawStats(this.display.ctx);
     if (this.mode === 'party') this.party.remotePlay.capture();
   }
 
@@ -184,6 +211,8 @@ export class Game {
     audio.setVolume('sfx', st.sfx);
     audio.setVolume('ambient', st.ambient);
     this.input.rumbleOn = st.rumble !== false;
+    this.stats.on = !!st.stats || SHOW_STATS;
+    setServer(st.server);
   }
 
   applyZoom() { this.display.setZoomBias(this.settings.zoom || 0); }
@@ -384,27 +413,42 @@ export class Game {
     grad.addColorStop(1, 'rgba(26,18,38,0)');
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, W, H * 0.4);
+    // Layout: the header (logo + tagline) and the menu share one canvas, which can be
+    // as short as a phone's 528x240. The menu gets the room it needs and the tagline —
+    // a decoration — is what gives way; the rows only tighten once that isn't enough.
+    // (The Latin and Chinese faces share a baseline, so an ink bottom is pen + 9*scale
+    // in both.)
+    const items = this.titleItems().map(([label, key]) => [t(label), key]);
+    const mw = Math.max(130, ...items.map(([label]) => measure(label) + 44));
+    // Reserve the actual footer height, including wrapped translations and the phone safe area.
+    const footerTop = this.projectLinks && !this.projectLinks.hidden
+      ? this.projectLinks.getBoundingClientRect().top * H / window.innerHeight : H;
+    const hintY = Math.floor(footerTop - 17);
+    const rowH = this.input.touchMode ? 21 : 16;
+    const menuH = (rows) => items.length * rows + 10;
+    let scale = W < 360 ? 3 : 4;
+    let ly = Math.round(H * 0.15);
+    let tagY = ly + scale * 9 + 8;
+    const fits = (top) => top + 6 + menuH(rowH) <= hintY - 6;
+    if (!fits(tagY + 9)) {
+      tagY = 0;                                         // the tagline goes first
+      if (!fits(ly + scale * 9) && scale > 3) { scale = 3; ly = Math.round(H * 0.08); }
+    }
     // logo
-    const ly = Math.round(H * 0.15);
     const glow = 0.5 + Math.sin(tt * 1.5) * 0.5;
-    const scale = W < 360 ? 3 : 4;
     drawText(ctx, 'Hearthlight', W / 2 + 8, ly, { color: '#fff3c4', align: 'center', scale, outline: '#3b2a2e' });
     ctx.globalAlpha = 0.18 + glow * 0.18;
     drawText(ctx, 'Hearthlight', W / 2 + 8, ly, { color: '#ffd66b', align: 'center', scale });
     ctx.globalAlpha = 1;
     this.drawLanternIcon(ctx, Math.round(W / 2 + 8 - measure('Hearthlight', scale) / 2) - 18, ly + 2, tt);
-    drawText(ctx, t('~ a cozy little life in Marigold Cove ~'), W / 2, ly + scale * 9 + 8, { color: '#f6d38f', align: 'center', shadow: '#2a1f33' });
+    if (tagY) drawText(ctx, t('~ a cozy little life in Marigold Cove ~'), W / 2, tagY, { color: '#f6d38f', align: 'center', shadow: '#2a1f33' });
     if (w.menu.open) { w.menu.draw(ctx); return; }
     // menu
-    const items = this.titleItems().map(([label, key]) => [t(label), key]);
     // (a finger wants taller rows)
-    const rh = this.input.touchMode ? 21 : 16;
-    const mw = Math.max(130, ...items.map(([label]) => measure(label) + 44)), mh = items.length * rh + 10;
-    // Reserve the actual footer height, including wrapped translations and the phone safe area.
-    const footerTop = this.projectLinks && !this.projectLinks.hidden
-      ? this.projectLinks.getBoundingClientRect().top * H / window.innerHeight : H;
-    const hintY = Math.floor(footerTop - 17);
-    const mx = Math.round(W / 2 - mw / 2), my = Math.round(Math.min(H * 0.6, hintY - mh - 12));
+    const top = (tagY || ly + scale * 9) + 6;
+    let rh = rowH, mh = menuH(rh);
+    if (top + mh > hintY - 6) { rh = Math.max(12, Math.floor((hintY - 6 - top - 10) / items.length)); mh = menuH(rh); }
+    const mx = Math.round(W / 2 - mw / 2), my = Math.round(Math.max(top, Math.min(H * 0.6, hintY - mh - 12)));
     ctx.fillStyle = 'rgba(30,20,40,0.55)';
     ctx.fillRect(mx, my, mw, mh);
     ctx.fillStyle = 'rgba(255,240,200,0.2)';
@@ -867,6 +911,28 @@ export class Game {
     });
   }
 
+  // ------------------------------------------------------------------- stats
+  // The frame's vital signs, top-left but clear of the clock panel: the display
+  // list Three just built (triangles, draw calls) and what it costs in memory.
+  // Beside `game.debug.stats()` the URL flag ?debug=1 turns it on.
+  drawStats(ctx) {
+    const s = this.stats, info = this.r3d.renderer.info;
+    const k = (v) => (v >= 1e6 ? (v / 1e6).toFixed(1) + 'M' : v >= 1e3 ? (v / 1e3).toFixed(1) + 'k' : String(Math.round(v)));
+    const rows = [
+      `${Math.round(s.fps)} fps · ${s.ms.toFixed(1)} ms (peak ${Math.round(s.peak)})`,
+      `${k(info.render.triangles)} tris · ${k(info.render.calls)} call${info.render.calls === 1 ? '' : 's'}`,
+      `${k(info.memory.geometries)} geo · ${k(info.memory.textures)} tex · ${k((info.programs || []).length)} prog`,
+    ];
+    const lh = lineStep(11);
+    const w = Math.max(...rows.map((r) => measure(r))) + 9, h = rows.length * lh + 5;
+    const x = 88, y = 5;                       // just right of the clock (5 + 78)
+    ctx.fillStyle = 'rgba(16,11,22,0.55)';
+    ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = 'rgba(255,240,200,0.18)';
+    ctx.fillRect(x, y, w, 1);
+    rows.forEach((r, i) => drawText(ctx, r, x + 4, y + 3 + i * lh, { color: '#bfe3ff' }));
+  }
+
   // ------------------------------------------------------------------ debug
   makeDebug() {
     const g = this;
@@ -874,6 +940,7 @@ export class Game {
     return {
       shot: (name = 'shot', scale = 3, crop = null) => g.screenshot(name, scale, crop),
       pause: (on = true) => { g.paused = on; },
+      stats: (on = true) => { g.stats.on = !!on; },
       // all stepping helpers yield between frames so story promises resolve
       step: async (n = 1, dt = 1 / 60) => { for (let i = 0; i < n; i++) await tick(dt); },
       key: async (code, frames = 2) => { g.input.keys.add(code); for (let i = 0; i < frames; i++) await tick(); g.input.keys.delete(code); await tick(); },

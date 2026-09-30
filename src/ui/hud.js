@@ -1,7 +1,7 @@
 // Heads-up display: clock & weather, coins, hotbar, quest tracker, minimap,
 // toasts, area banners and interaction prompts.
 
-import {drawText, measure, wrap, lineStep } from '../engine/font.js';
+import {drawText, measure, wrap, lineStep, inkBox, FONT_H } from '../engine/font.js';
 import { panel, keyHint, coinIcon, UI, heart, splitTwo, fitText, tc } from './ui.js';
 import { drawIcon } from '../art/icons.js';
 import { ITEMS } from '../data/items.js';
@@ -396,16 +396,23 @@ export class Hud {
       // long (French) names go on two lines rather than off the screen
       let sc = 2, title = splitTwo(b.title, W - 38, 2);
       if (title.some((l) => measure(l, 2) > W - 38)) { sc = 1; title = [fitText(b.title, W - 38)]; }
-      const lh = 19, extra = (title.length - 1) * lh;
+      // Chinese ink is taller than Latin's and reaches 4px above the line's
+      // top edge (font.js inkBox), so the title sits lower to stay inside the
+      // box and the sub-line drops clear of the title's ink, not its baseline.
+      // Latin: dTop and dInk are 0 and this is the layout it always had.
+      const tb = inkBox(sc), sb = inkBox(1);
+      const dTop = -tb.top, dInk = Math.max(0, sb.h - FONT_H), drop = dTop + dInk;
+      const lh = 19 + dInk, extra = (title.length - 1) * lh;
       const sub = b.sub ? fitText(b.sub, W - 38) : '';
       const tw = Math.min(W - 8, Math.max(...title.map((l) => measure(l, sc)), measure(sub)) + 30);
       const bx = Math.round(W / 2 - tw / 2), by = 12 + Math.round((1 - a) * -6);
+      const boxH = (sub ? 34 : 24) + extra + drop;
       ctx.fillStyle = 'rgba(30,20,36,0.55)';
-      ctx.fillRect(bx, by, tw, (sub ? 34 : 24) + extra);
+      ctx.fillRect(bx, by, tw, boxH);
       ctx.fillStyle = '#f6d38f';
-      ctx.fillRect(bx + 6, by + (sub ? 30 : 21) + extra, tw - 12, 1);
-      title.forEach((l, i) => drawText(ctx, l, W / 2, by + 4 + i * lh + (sc === 1 ? 4 : 0), { color: '#fff7e6', align: 'center', scale: sc, shadow: '#2a1f33' }));
-      if (sub) drawText(ctx, sub, W / 2, by + 22 + extra, { color: '#f6d38f', align: 'center' });
+      ctx.fillRect(bx + 6, by + boxH - 3, tw - 12, 1);
+      title.forEach((l, i) => drawText(ctx, l, W / 2, by + 4 + dTop + i * lh + (sc === 1 ? 4 : 0), { color: '#fff7e6', align: 'center', scale: sc, shadow: '#2a1f33' }));
+      if (sub) drawText(ctx, sub, W / 2, by + 22 + extra + drop, { color: '#f6d38f', align: 'center' });
       ctx.globalAlpha = 1;
     }
   }

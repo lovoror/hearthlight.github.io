@@ -90,8 +90,14 @@ phones with a browser (or the APK) joined to the same room code.
 | `-Stats` | *(empty)* | set to `https://…/hello` to ping the stats counter on boot |
 | `-Out` | `android/Hearthlight.apk` | where the signed APK goes |
 
-For a LAN-only build (desktop-relay style, no public server), pass
-`-Relay ws://<your-ip>:8765/ws -Pad http://<your-ip>:8765/pad.html`.
+The two party parameters are only a default: the app itself asks for the server in
+**Settings · Party server**, and one address gives both the relay and the page the phones
+open (`192.168.1.20:8765` → `ws://192.168.1.20:8765/ws` + `http://192.168.1.20:8765/pad.html`),
+so a LAN party needs no rebuild. `-Relay`/`-Pad` just preconfigure `config.js` (the address
+already filled in); the `ws://` a LAN relay uses is fine because the WebView allows mixed
+content. On a machine that hosts the party itself the row is already filled with that
+machine's own LAN address — the local server reports it at `/__lan` — but a phone has no LAN
+server to ask, so there it reads `默认`/`Default` until an address is typed in.
 
 ## Checking a build without a device
 

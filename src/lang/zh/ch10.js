@@ -1,14 +1,14 @@
 // 世界 v7 第十章：《盛大终场》（src/saga/chapters/ch10.js）与尾声、阴霾剧场副本
 // （src/saga/dungeons/finale.js：聚光灯，saga/spots.js）、终场的敌人
 // （src/combat/v7/finale.js）。单人剧情用「你」。__group 是「你们」的台词。
-// 译名：the Gloomstage → 阴霾剧场，Snuffbot Mk III → 熄灭机器人三号，
-// the Umbral Spotlight → 幽影聚光灯，the Grand Snuffer → 大熄灭器。
+// 译名：the Gloomstage → 阴霾剧场，Snuffbot Mk III → 熄灯机器人三号，
+// the Umbral Spotlight → 幽影聚光灯，the Grand Snuffer → 大熄灯器。
 
 export const CH10_ZH = {
   // ---- 终场的敌人（combat/v7/finale.js）
   'Stagehand': '舞台工',
-  'Snuffbot Mk III': '熄灭机器人三号',
-  'Crumble’s Snuffbot Mk III': '碎碎的熄灭机器人三号',
+  'Snuffbot Mk III': '熄灯机器人三号',
+  'Crumble’s Snuffbot Mk III': '碎碎的熄灯机器人三号',
   'Duchess Gloria Gloomsworth, in her Grand Finale': '格洛丽亚·格鲁姆斯沃斯女公爵，盛大终场中',
   'Snuffed! (hop, or wait for a friend)': '被熄灭了！（跳一下，或者等同伴来）',
   'Down the trapdoor!': '掉进活板门了！',
@@ -64,8 +64,8 @@ export const CH10_ZH = {
   'The fly tower: ropes, catwalks, lights — and the follow-spot, which hunts. A lever on the lighting board puts every light out.': '吊景塔：绳索、走道、灯——还有会追人的追光灯。灯光台上的一根拉杆能熄掉所有的灯。',
   'Up and over — the stage is below!': '爬上去，翻过去——舞台就在下面！',
 
-  // ---- 工作间：熄灭机器人三号
-  'LADIES, GENTLEMEN AND ASSORTED LAMP-LICKERS! Crumble’s workshop proudly presents…{p} the Snuffbot MARK THREE, as PROMISED!': '女士们，先生们，以及各位舔灯管的！碎碎的工作间隆重推出……{p} 如约而至的熄灭机器人三号！',
+  // ---- 工作间：熄灯机器人三号
+  'LADIES, GENTLEMEN AND ASSORTED LAMP-LICKERS! Crumble’s workshop proudly presents…{p} the Snuffbot MARK THREE, as PROMISED!': '女士们，先生们，以及各位舔灯管的！碎碎的工作间隆重推出……{p} 如约而至的熄灯机器人三号！',
   'New! Improved! It has MOVES now. Its very own moves! I drew them myself, with a crayon!': '全新的！改进过的！它现在有招式了。它自己的招式！是我亲手画的，用蜡笔！',
   '…Please don’t hit the dome. The dome is very sensitive. Emotionally.': '……请不要打圆顶。圆顶非常敏感。在感情上。',
   'Crumble’s masterpiece (at last)': '碎碎的代表作（终于）',

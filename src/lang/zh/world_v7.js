@@ -1,10 +1,10 @@
-// 世界 v7 —— 大世界：两片大陆、广海、黎明之地的
+// 世界 v7 —— 大世界：两片大陆、茫茫大海、黎明之地的
 // 地区、城镇与地标（src/world/big/layout.js、gen2.js）及其天气。
 export const WORLD7 = {
   // ---- 大陆与海洋
   'The Hearthlands': '炉火之地',
   'The Dawnlands': '黎明之地',
-  'The Wide Sea': '广海',
+  'The Wide Sea': '茫茫大海',
   // ---- 黎明之地的地区
   'Whale Isle': '鲸岛',
   'Lantern Bay': '灯笼湾',

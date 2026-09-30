@@ -28,32 +28,47 @@ function dress(ch, chain) {
 const NAMES = ['Alex', 'Sam', 'Robin', 'Charlie', 'Noa', 'Lou', 'Mika', 'Jules', 'Milo', 'Luna', 'Nico', 'Ada', 'Leo', 'Zoé', 'Léa', 'Hugo',
   'Maya', 'Eli', 'Nina', 'Oscar', 'Iris', 'Tom', 'Emma', 'Lucas', 'Jade', 'Rémi', 'Noor', 'Aiko', 'Omar', 'Elsa', 'Yann', 'Suki'];
 
+// (Settings · Party server: an address needs digits, dots and a colon — this is the
+// name keyboard with the letters kept and a number row in front of them)
+export const ADDR_ROWS = [
+  '1234567890'.split(''),
+  'ABCDEFGHIJ'.split(''),
+  'KLMNOPQRST'.split(''),
+  'UVWXYZ.-:/'.split(''),
+  ['⇧', ' ', '⌫', 'OK'],
+];
+
 export class Osk {
-  constructor(value = '', { max = 12, title = 'Your name', keys = null, hint = null } = {}) {
+  constructor(value = '', { max = 12, title = 'Your name', keys = null, hint = null, rows = ROWS, allowEmpty = false } = {}) {
     this.v = value;
     this.keys = keys;             // { a, b, x, ok }: the buttons' names, when they aren't the big screen's
     this.hint = hint;             // (a line of its own under the keys: a name typed on a keyboard)
+    this.rows = rows;             // (ADDR_ROWS for anything that isn't a name)
+    this.allowEmpty = allowEmpty; // (an empty value is a value: it means "the default")
     this.max = max;
     this.title = title;
     this.r = 0; this.c = 0;
-    this.caps = !value;           // (a new name starts with a capital)
+    this.caps = !value && rows !== ADDR_ROWS;   // (a new name starts with a capital; an address never does)
     this.done = false;            // OK pressed
     this.back = false;            // B on an empty name: leave it be
     this.t = 0;
   }
 
-  get key() { return ROWS[this.r][Math.min(this.c, ROWS[this.r].length - 1)]; }
+  get key() { return this.rows[this.r][Math.min(this.c, this.rows[this.r].length - 1)]; }
+
+  has(k) { return this.rows.some((r) => r.includes(k)); }
 
   update(dt, input) {
     this.t += dt;
+    const R = this.rows;
     const move = (dr, dc) => {
       const was = this.key;
       if (dr) {
         // (into the short bottom row and out of it, the column follows the width)
-        const from = ROWS[this.r].length, r = (this.r + dr + ROWS.length) % ROWS.length, to = ROWS[r].length;
+        const from = R[this.r].length, r = (this.r + dr + R.length) % R.length, to = R[r].length;
         this.c = Math.min(to - 1, Math.round((this.c + 0.5) * to / from - 0.5));
         this.r = r;
-      } else this.c = (this.c + dc + ROWS[this.r].length) % ROWS[this.r].length;
+      } else this.c = (this.c + dc + R[this.r].length) % R[this.r].length;
       if (this.key !== was) audio.sfx('select', { volume: 0.3 });
     };
     if (input.repeat('up')) move(-1, 0);
@@ -62,7 +77,7 @@ export class Osk {
     if (input.repeat('right')) move(0, 1);
     if (input.pressed('interact')) { input.consume('interact'); this.press(this.key); }
     if (input.pressed('cancel')) { input.consume('cancel', 'jump'); if (this.v) this.press('⌫'); else { this.back = true; audio.sfx('cancel', { volume: 0.5 }); } }
-    if (input.pressed('special')) this.press('🎲');
+    if (input.pressed('special') && this.has('🎲')) this.press('🎲');
     if (input.pressed('start')) { input.consume('start', 'pause'); this.press('OK'); }
     for (const r of this.rects || []) if (input.mouseIn(r.x, r.y, r.w, r.h)) {
       if (input.mouse.moved) { this.r = r.r; this.c = r.c; }
@@ -71,7 +86,7 @@ export class Osk {
   }
 
   press(k) {
-    if (k === 'OK') { if (!this.v.trim()) { audio.sfx('error'); return; } this.done = true; audio.sfx('confirm'); return; }
+    if (k === 'OK') { if (!this.v.trim()) { if (!this.allowEmpty) { audio.sfx('error'); return; } this.done = true; audio.sfx('confirm'); return; } this.done = true; audio.sfx('confirm'); return; }
     if (k === '⌫') { this.v = this.v.slice(0, -1); if (!this.v) this.caps = true; audio.sfx('typewriter', { volume: 0.35 }); return; }
     if (k === '⇧') { this.caps = !this.caps; audio.sfx('select', { volume: 0.4 }); return; }
     if (k === '🎲') {
@@ -105,7 +120,8 @@ export class Osk {
   // (x0, y0: the corner of the W × H area it sits in the middle of)
   draw(ctx, W, H, x0 = 0, y0 = 0) {
     const cell = 17, gap = 2, gw = 10 * cell + 9 * gap;
-    const pw = gw + 20, ph = 4 * (cell + gap) + 62;
+    const rows = this.rows, last = rows.length - 1;
+    const pw = gw + 20, ph = rows.length * (cell + gap) + 62;
     const px = x0 + Math.round(W / 2 - pw / 2), py = y0 + Math.round(H / 2 - ph / 2);
     ctx.fillStyle = 'rgba(20,14,28,0.5)'; ctx.fillRect(x0, y0, W, H);
     panel(ctx, px, py, pw, ph);
@@ -120,11 +136,11 @@ export class Osk {
     drawText(ctx, `${this.v.length}/${this.max}`, bx + gw - 4, by + 3, { color: '#b8a080', align: 'right' });
     // the keys
     this.rects = [];
-    ROWS.forEach((row, r) => {
-      const cw = r === 3 ? Math.floor((gw - 4 * gap) / 5) : cell;
+    rows.forEach((row, r) => {
+      const special = r === last;
+      const cw = row.length < 10 ? Math.floor((gw - (row.length - 1) * gap) / row.length) : cell;
       row.forEach((k, c) => {
         const x = bx + c * (cw + gap), y = by + 20 + r * (cell + gap), on = r === this.r && c === Math.min(this.c, row.length - 1);
-        const special = r === 3;
         ctx.fillStyle = on ? '#e0a526' : '#3b2a22'; ctx.fillRect(x, y, cw, cell);
         ctx.fillStyle = on ? '#fff3c4' : special ? '#e8d6b4' : '#f6ead0'; ctx.fillRect(x + 1, y + 1, cw - 2, cell - 3);
         const label = k === ' ' ? t('space') : k === 'OK' ? t('OK') : k === '⇧' ? (this.caps ? 'ABC' : 'abc') : special ? k : this.caps ? k.toUpperCase() : k.toLowerCase();

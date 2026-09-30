@@ -64,6 +64,9 @@ public class MainActivity extends Activity {
     s.setUseWideViewPort(false);
     s.setLoadWithOverviewMode(false);
     s.setCacheMode(WebSettings.LOAD_DEFAULT);
+    // (the page is served from a https origin; a party on the local network is ws:// — a
+    // WebView blocks that as mixed content unless it is told not to)
+    s.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
     web.setVerticalScrollBarEnabled(false);
     web.setHorizontalScrollBarEnabled(false);
     web.setOverScrollMode(View.OVER_SCROLL_NEVER);
